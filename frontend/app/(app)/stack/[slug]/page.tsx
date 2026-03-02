@@ -1,11 +1,12 @@
-// Bug 1 fix: async params (Next.js 15)
-// Bug 10 fix: notFound() replaced with client-side 404 UI
+// Next.js 14 — params is synchronous (not a Promise)
+// Bug 10 fix retained: notFound() replaced with redirect for client-safety
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Star, ArrowLeft, Wrench, CheckCircle2, Users } from 'lucide-react'
 import { AGENTS_CATALOG } from '@/lib/agents-data'
 import { DOMAIN_META } from '@/lib/mock-data'
 import { AgentTerminal } from '@/components/AgentTerminal'
+import { WorkflowsSection } from '@/components/WorkflowsSection'
 
 function StarRow({ rating }: { rating: number }) {
   return (
@@ -22,15 +23,12 @@ function StarRow({ rating }: { rating: number }) {
   )
 }
 
-export default async function AgentDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
-  const { slug } = await params
-  const agent = AGENTS_CATALOG.find(a => a.slug === slug)
+interface PageProps {
+  params: { slug: string }
+}
 
-  // Bug 10: notFound() doesn't work in client components — redirect to /stack instead
+export default function AgentDetailPage({ params }: PageProps) {
+  const agent = AGENTS_CATALOG.find(a => a.slug === params.slug)
   if (!agent) redirect('/stack')
 
   const meta = DOMAIN_META[agent.domain]
@@ -61,19 +59,13 @@ export default async function AgentDetailPage({
             className="absolute top-8 left-8 w-48 h-48 rounded-full pointer-events-none opacity-30"
             style={{ background: meta.color, filter: 'blur(80px)' }}
           />
-
           <div className="relative flex flex-col sm:flex-row sm:items-start gap-6">
             <div
               className="icon-node w-16 h-16 flex-shrink-0"
-              style={{
-                background: meta.bg,
-                borderColor: `${meta.color}60`,
-                boxShadow: `0 0 40px ${meta.color}30`,
-              }}
+              style={{ background: meta.bg, borderColor: `${meta.color}60`, boxShadow: `0 0 40px ${meta.color}30` }}
             >
               <Icon size={28} style={{ color: meta.color }} />
             </div>
-
             <div className="flex-1">
               <p className="font-mono text-xs tracking-widest uppercase mb-1.5" style={{ color: meta.color }}>
                 {agent.domain}
@@ -84,34 +76,23 @@ export default async function AgentDetailPage({
               <p className="font-mono text-sm tracking-widest uppercase text-muted mt-1">
                 {agent.role}
               </p>
-
               <div className="flex flex-wrap items-center gap-4 mt-4">
                 <StarRow rating={agent.rating} />
                 <span className="text-subtle text-2xs">|</span>
                 <div className="flex items-center gap-1.5">
                   <Users size={12} className="text-muted" />
-                  <span className="font-mono text-xs text-muted">
-                    {agent.installs.toLocaleString()} installs
-                  </span>
+                  <span className="font-mono text-xs text-muted">{agent.installs.toLocaleString()} installs</span>
                 </div>
                 <span className="text-subtle text-2xs">|</span>
                 <span
                   className="chip text-2xs"
-                  style={{
-                    color: '#22C55E',
-                    borderColor: 'rgba(34,197,94,0.3)',
-                    background: 'rgba(34,197,94,0.08)',
-                  }}
+                  style={{ color: '#22C55E', borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.08)' }}
                 >
                   <span className="status-dot active" />
                   {agent.status}
                 </span>
               </div>
-
-              <p className="text-base text-muted leading-relaxed mt-4 max-w-[560px]">
-                {agent.tagline}
-              </p>
-
+              <p className="text-base text-muted leading-relaxed mt-4 max-w-[560px]">{agent.tagline}</p>
               <div className="flex flex-wrap gap-3 mt-6">
                 <button className="btn-primary">Add to Stack</button>
                 <button className="btn-outline">View Docs</button>
@@ -122,25 +103,21 @@ export default async function AgentDetailPage({
 
         {/* ── 2-COL CONTENT ──────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
           <div className="lg:col-span-2 flex flex-col gap-6">
             <div className="card p-6">
               <p className="section-label mb-4">About</p>
               <p className="text-sm text-muted leading-relaxed">{agent.description}</p>
             </div>
-
             <div className="card p-6">
               <p className="section-label mb-4">Skills</p>
               <div className="flex flex-wrap gap-2">
                 {agent.skills.map(skill => (
                   <span key={skill} className="chip" style={{ borderColor: `${meta.color}30`, color: meta.color }}>
-                    <CheckCircle2 size={10} />
-                    {skill}
+                    <CheckCircle2 size={10} />{skill}
                   </span>
                 ))}
               </div>
             </div>
-
             <div className="card p-6">
               <div className="flex items-center gap-2 mb-4">
                 <p className="section-label">Compatible Tools</p>
@@ -156,11 +133,10 @@ export default async function AgentDetailPage({
 
           <div className="lg:col-span-1">
             <div className="card p-6 lg:sticky lg:top-6" style={{ boxShadow: `0 0 40px -10px ${meta.color}20` }}>
-              <div
-                className="h-[3px] w-full rounded-full mb-5"
-                style={{ background: `linear-gradient(to right, ${meta.color}, transparent)` }}
-              />
-              <div className="icon-node w-12 h-12 mx-auto mb-4" style={{ background: meta.bg, borderColor: `${meta.color}50` }}>
+              <div className="h-[3px] w-full rounded-full mb-5"
+                   style={{ background: `linear-gradient(to right, ${meta.color}, transparent)` }} />
+              <div className="icon-node w-12 h-12 mx-auto mb-4"
+                   style={{ background: meta.bg, borderColor: `${meta.color}50` }}>
                 <Icon size={20} style={{ color: meta.color }} />
               </div>
               <h3 className="font-display text-base font-semibold text-center mb-1">{agent.name}</h3>
@@ -222,8 +198,11 @@ export default async function AgentDetailPage({
           <AgentTerminal agentName={agent.name} domain={agent.domain} />
         </section>
 
+        {/* ── WORKFLOWS ─────────────────────────── */}
+        <WorkflowsSection agentSlug={agent.slug} />
+
         {/* ── REVIEWS ──────────────────────────── */}
-        <section>
+        <section className="mt-10">
           <div className="flex items-center justify-between mb-6">
             <p className="section-label">Reviews</p>
             <span className="chip font-mono">{agent.reviews.length} reviews</span>
@@ -233,15 +212,13 @@ export default async function AgentDetailPage({
               <div key={i} className="card p-6 flex flex-col gap-3">
                 <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, s) => (
-                    <Star
-                      key={s}
-                      size={12}
-                      className={s < review.rating ? 'fill-[#FFD600] text-[#FFD600]' : 'text-subtle'}
-                    />
+                    <Star key={s} size={12}
+                      className={s < review.rating ? 'fill-[#FFD600] text-[#FFD600]' : 'text-subtle'} />
                   ))}
                 </div>
                 <p className="text-sm text-muted leading-relaxed flex-1">&ldquo;{review.body}&rdquo;</p>
-                <div className="flex items-center justify-between pt-2" style={{ borderTop: '1px solid var(--color-border)' }}>
+                <div className="flex items-center justify-between pt-2"
+                     style={{ borderTop: '1px solid var(--color-border)' }}>
                   <div>
                     <p className="text-sm font-semibold text-foreground">{review.author}</p>
                     <span className="chip text-2xs mt-1" style={{ display: 'inline-flex' }}>{review.company}</span>

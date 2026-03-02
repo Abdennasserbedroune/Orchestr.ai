@@ -91,3 +91,21 @@ create policy "activity_insert" on activity_log for insert with check (
 );
 create index activity_workspace_idx  on activity_log(workspace_id);
 create index activity_created_at_idx on activity_log(created_at desc);
+
+-- USER WORKFLOWS
+-- Tracks which n8n workflows a workspace has imported.
+-- workflow_id references N8N_WORKFLOWS_INDEX ids (static, not DB rows).
+create table if not exists user_workflows (
+  id           uuid primary key default uuid_generate_v4(),
+  workspace_id uuid not null references workspaces(id) on delete cascade,
+  agent_slug   text not null,
+  workflow_id  text not null,   -- e.g. 'quill-001' from n8n-workflows-index.ts
+  imported_at  timestamptz default now(),
+  unique(workspace_id, workflow_id)
+);
+alter table user_workflows enable row level security;
+create policy "user_workflows_all" on user_workflows for all using (
+  workspace_id in (select id from workspaces where owner_id = auth.uid())
+);
+create index user_workflows_workspace_idx on user_workflows(workspace_id);
+create index user_workflows_agent_idx     on user_workflows(agent_slug);
