@@ -1,5 +1,8 @@
+// Bug 11 fix: wrap card in Link so clicking navigates to /stack/[slug]
+import Link from 'next/link'
 import { DOMAIN_META } from '@/lib/mock-data'
 import type { MockAgent } from '@/lib/mock-data'
+import { AGENTS_CATALOG } from '@/lib/agents-data'
 
 interface AgentCardProps {
   agent: MockAgent
@@ -8,9 +11,11 @@ interface AgentCardProps {
 export function AgentCard({ agent }: AgentCardProps) {
   const meta = DOMAIN_META[agent.domain]
   const Icon = meta.icon
+  // Resolve slug from AGENTS_CATALOG by matching name — MockAgent doesn't carry slug
+  const slug = AGENTS_CATALOG.find(a => a.name === agent.name)?.slug ?? agent.id
 
   return (
-    <div className="card-hover p-5 group relative overflow-hidden">
+    <Link href={`/stack/${slug}`} className="card-hover p-5 group relative overflow-hidden block">
       {/* Domain-colored inset border glow on hover */}
       <div
         className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
@@ -25,7 +30,6 @@ export function AgentCard({ agent }: AgentCardProps) {
         >
           <Icon size={16} style={{ color: meta.color }} />
         </div>
-
         <div className="flex items-center gap-1.5">
           <span className={`status-dot ${agent.status}`} />
           <span className="font-mono text-2xs tracking-widest uppercase text-muted">
@@ -42,7 +46,6 @@ export function AgentCard({ agent }: AgentCardProps) {
         {agent.role}
       </p>
 
-      {/* Divider */}
       <div className="h-px w-full mb-4" style={{ background: 'var(--color-border)' }} />
 
       {/* Tasks count + last active */}
@@ -51,16 +54,14 @@ export function AgentCard({ agent }: AgentCardProps) {
           <span className="text-gradient font-mono text-2xl font-medium leading-none">
             {agent.tasksCompleted}
           </span>
-          <p className="text-2xs text-subtle font-mono uppercase tracking-widest mt-1">
-            tasks done
-          </p>
+          <p className="text-2xs text-subtle font-mono uppercase tracking-widest mt-1">tasks done</p>
         </div>
         <div className="text-right">
           <p className="text-2xs text-subtle font-mono">last active</p>
           <p className="text-2xs text-muted font-mono mt-0.5">{agent.lastActive}</p>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }
 

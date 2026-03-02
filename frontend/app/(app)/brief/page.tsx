@@ -1,10 +1,12 @@
 'use client'
+// Bug 2 fix: messagesRef prevents stale closure in sendMessage
+// Bug 3 fix: correct mobile height offset (56px = h-14 top bar)
+// Bug 4/5/6 fix: orange tokens replaced with brand indigo
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Zap } from 'lucide-react'
 import { ChatMessageBubble } from '@/components/ChatMessage'
 import type { Message } from '@/components/ChatMessage'
 
-// ─── Starter prompts ─────────────────────────────────────────────────────────
 const STARTERS = [
   { label: 'Automate outreach',   prompt: 'I need to automate my sales outreach. Which agent should I use?' },
   { label: 'Generate blog posts', prompt: 'I want to generate SEO-optimised blog posts at scale.' },
@@ -23,43 +25,41 @@ export default function BriefPage() {
     {
       id: 'welcome',
       role: 'assistant',
-      content: "I'm Brief — your AI operations consultant inside Orchestrai.\n\nTell me what you need to automate or optimise, and I'll point you to the right agent from The Stack.",
+      content: "I'm Brief \u2014 your AI operations consultant inside Orchestrai.\n\nTell me what you need to automate or optimise, and I'll point you to the right agent from The Stack.",
     },
   ])
-  const [input,     setInput    ] = useState('')
-  const [loading,   setLoading  ] = useState(false)
+  const [input,   setInput  ] = useState('')
+  const [loading, setLoading] = useState(false)
+
   const bottomRef   = useRef<HTMLDivElement>(null)
   const inputRef    = useRef<HTMLInputElement>(null)
   const abortRef    = useRef<AbortController | null>(null)
+  // Bug 2: mirror messages into a ref so sendMessage never closes over stale state
+  const messagesRef = useRef(messages)
+  useEffect(() => { messagesRef.current = messages }, [messages])
 
-  // Auto-scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  // ─── Streaming send ─────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim()
     if (!trimmed || loading) return
 
-    // Append user message
     const userMsg: Message = { id: createId(), role: 'user', content: trimmed }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setLoading(true)
 
-    // Placeholder streaming message
     const assistantId = createId()
-    const streamingMsg: Message = { id: assistantId, role: 'assistant', content: '', streaming: true }
-    setMessages(prev => [...prev, streamingMsg])
+    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', streaming: true }])
 
-    // Build messages array for API (exclude welcome system message from history)
-    const history = [...messages, userMsg]
+    // Bug 2: read from ref — always current, never stale
+    const history = [...messagesRef.current, userMsg]
       .filter(m => m.id !== 'welcome')
       .map(({ role, content }) => ({ role, content }))
 
@@ -73,11 +73,8 @@ export default function BriefPage() {
         signal: abortRef.current.signal,
       })
 
-      if (!res.ok || !res.body) {
-        throw new Error(`API error ${res.status}`)
-      }
+      if (!res.ok || !res.body) throw new Error(`API error ${res.status}`)
 
-      // Read raw text/plain stream chunk-by-chunk
       const reader  = res.body.getReader()
       const decoder = new TextDecoder()
 
@@ -86,19 +83,12 @@ export default function BriefPage() {
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
         setMessages(prev =>
-          prev.map(m =>
-            m.id === assistantId
-              ? { ...m, content: m.content + chunk }
-              : m
-          )
+          prev.map(m => m.id === assistantId ? { ...m, content: m.content + chunk } : m)
         )
       }
 
-      // Mark streaming complete
       setMessages(prev =>
-        prev.map(m =>
-          m.id === assistantId ? { ...m, streaming: false } : m
-        )
+        prev.map(m => m.id === assistantId ? { ...m, streaming: false } : m)
       )
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
@@ -114,7 +104,7 @@ export default function BriefPage() {
       abortRef.current = null
       inputRef.current?.focus()
     }
-  }, [loading, messages])
+  }, [loading]) // messages removed from deps — read via ref instead
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -123,12 +113,12 @@ export default function BriefPage() {
     }
   }
 
-  const isFirstMessage = messages.length === 1 // only the welcome msg
+  const isFirstMessage = messages.length === 1
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] max-h-[calc(100vh-64px)]">
+    // Bug 3: 56px offset for mobile top bar; full height on md+ (sidebar is sideways)
+    <div className="flex flex-col h-[calc(100vh-56px)] md:h-screen max-h-[calc(100vh-56px)] md:max-h-screen">
 
-      {/* ── Message area ────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 md:px-8">
         <div className="max-w-[760px] mx-auto py-8 flex flex-col gap-6">
 
@@ -136,7 +126,6 @@ export default function BriefPage() {
             <ChatMessageBubble key={msg.id} message={msg} />
           ))}
 
-          {/* Starter prompts — only before first user message */}
           {isFirstMessage && (
             <div className="mt-2">
               <p className="section-label mb-3">Try asking</p>
@@ -151,9 +140,13 @@ export default function BriefPage() {
                       border: '1px solid rgba(255,255,255,0.07)',
                     }}
                   >
+                    {/* Bug 4: brand indigo, not bitcoin orange */}
                     <span
                       className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center"
-                      style={{ background: 'rgba(247,147,26,0.12)', border: '1px solid rgba(247,147,26,0.25)' }}
+                      style={{
+                        background: 'rgba(99,102,241,0.12)',
+                        border: '1px solid rgba(99,102,241,0.25)',
+                      }}
                     >
                       <Zap size={10} style={{ color: 'var(--color-brand)' }} />
                     </span>
@@ -170,7 +163,6 @@ export default function BriefPage() {
         </div>
       </div>
 
-      {/* ── Input bar ───────────────────────────── */}
       <div
         className="px-4 md:px-8 py-4"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
@@ -181,7 +173,8 @@ export default function BriefPage() {
             style={{
               background: 'var(--color-panel)',
               border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: loading ? '0 0 20px rgba(247,147,26,0.12)' : 'none',
+              // Bug 5: brand indigo glow
+              boxShadow: loading ? '0 0 20px rgba(99,102,241,0.18)' : 'none',
               transition: 'box-shadow 0.3s ease',
             }}
           >
@@ -203,11 +196,12 @@ export default function BriefPage() {
               aria-label="Send message"
               className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
               style={{
+                // Bug 6: brand indigo gradient, not orange
                 background: input.trim() && !loading
-                  ? 'linear-gradient(135deg, #EA580C, #F7931A)'
+                  ? 'linear-gradient(135deg, #5254CC, #6366F1)'
                   : 'rgba(255,255,255,0.06)',
                 boxShadow: input.trim() && !loading
-                  ? '0 0 16px rgba(247,147,26,0.4)'
+                  ? '0 0 16px rgba(99,102,241,0.45)'
                   : 'none',
               }}
             >
@@ -216,7 +210,7 @@ export default function BriefPage() {
           </div>
 
           <p className="font-mono text-2xs text-subtle text-center mt-2 tracking-wider">
-            Brief uses Groq · llama-3.3-70b · responses may be imperfect
+            Brief uses Groq \u00b7 llama-3.3-70b \u00b7 responses may be imperfect
           </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+// Bug 7 fix: Brief avatar uses brand indigo, not bitcoin orange
 import { AGENTS_CATALOG } from '@/lib/agents-data'
 import { DOMAIN_META } from '@/lib/mock-data'
 
@@ -8,8 +9,6 @@ export type Message = {
   streaming?: boolean
 }
 
-// ─── Agent mention detection ─────────────────────────────────────────────────
-// Scans assistant message content for any known agent names and returns matches.
 function detectAgentMentions(content: string) {
   return AGENTS_CATALOG.filter(agent =>
     content.toLowerCase().includes(agent.name.toLowerCase())
@@ -44,11 +43,8 @@ function AgentMentionCard({ slug }: { slug: string }) {
           {agent.role}
         </p>
       </div>
-      <span
-        className="font-mono text-2xs flex-shrink-0"
-        style={{ color: meta.color }}
-      >
-        View →
+      <span className="font-mono text-2xs flex-shrink-0" style={{ color: meta.color }}>
+        View \u2192
       </span>
     </a>
   )
@@ -61,13 +57,14 @@ export function ChatMessageBubble({ message }: { message: Message }) {
 
   return (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end`}>
-      {/* Avatar */}
+
+      {/* Brief avatar — Bug 7: brand indigo */}
       {!isUser && (
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
           style={{
-            background: 'linear-gradient(135deg, #EA580C, #F7931A)',
-            boxShadow: '0 0 16px rgba(247,147,26,0.35)',
+            background: 'linear-gradient(135deg, #5254CC, #6366F1)',
+            boxShadow: '0 0 16px rgba(99,102,241,0.35)',
           }}
         >
           <span className="font-mono text-2xs font-bold text-white">B</span>
@@ -75,17 +72,15 @@ export function ChatMessageBubble({ message }: { message: Message }) {
       )}
 
       <div className={`flex flex-col gap-1 max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
-        {/* Role label */}
         <span className="font-mono text-2xs text-subtle uppercase tracking-widest px-1">
           {isUser ? 'You' : 'Brief'}
         </span>
 
-        {/* Bubble */}
         <div
           className="rounded-2xl px-4 py-3 text-sm leading-relaxed"
           style={isUser ? {
-            background: 'linear-gradient(135deg, #EA580C22, #F7931A22)',
-            border: '1px solid rgba(247,147,26,0.25)',
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(99,102,241,0.08))',
+            border: '1px solid rgba(99,102,241,0.25)',
             color: 'var(--color-foreground)',
             borderBottomRightRadius: '4px',
           } : {
@@ -96,7 +91,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
           }}
         >
           <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
-          {/* Streaming cursor */}
           {isStreaming && (
             <span
               className="inline-block w-[2px] h-[14px] ml-0.5 align-middle animate-pulse"
@@ -106,7 +100,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
           )}
         </div>
 
-        {/* Agent mention cards — only on complete assistant messages */}
         {!isUser && !isStreaming && mentions.length > 0 && (
           <div className="w-full flex flex-col gap-1.5 mt-1">
             {mentions.map(agent => (

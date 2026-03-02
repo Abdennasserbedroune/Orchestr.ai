@@ -1,15 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextRequest, NextResponse } from 'next/server'
+// Bug 8 fix: reuse the singleton supabase client instead of creating a new one per request
+import { NextResponse } from 'next/server'
 import { supabase } from './supabase'
+import type { NextRequest } from 'next/server'
 
 export async function getAuthUser(req: NextRequest) {
   const token = req.headers.get('Authorization')?.replace('Bearer ', '')
   if (!token) return null
-  const client = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-  const { data: { user } } = await client.auth.getUser(token)
+  const { data: { user } } = await supabase.auth.getUser(token)
   return user ?? null
 }
 
