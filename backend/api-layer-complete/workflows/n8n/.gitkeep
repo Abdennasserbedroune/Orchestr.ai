@@ -1,0 +1,10 @@
+# Workflows will be populated here by running:
+# bash backend/api-layer-complete/scripts/import-n8n-workflows.sh
+#
+# 160 categories / ~1032 JSON files will be placed under:
+#   workflows/n8n/<Category>/<filename>.json
+#
+# Full metadata catalog will be at:
+#   catalog/index.json
+#   catalog/by-category/<Category>.json
+#   catalog/stats.json
