@@ -34,6 +34,7 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(false)
   const [greetings, setGreetings] = useState('')
+  const [greetingDone, setGreetingDone] = useState(false)
 
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -45,6 +46,7 @@ export default function ChatPage() {
     if (messages.length === 0) {
       const fullText = getGreeting()
       setGreetings('')
+      setGreetingDone(false)
       let i = 0
       const timer = setInterval(() => {
         if (i < fullText.length) {
@@ -52,6 +54,7 @@ export default function ChatPage() {
           i++
         } else {
           clearInterval(timer)
+          setGreetingDone(true)
         }
       }, 38)
       return () => clearInterval(timer)
@@ -143,7 +146,8 @@ export default function ChatPage() {
     <div className="flex flex-col h-[calc(100vh-56px)] md:h-screen max-h-[calc(100vh-56px)] md:max-h-screen items-center relative overflow-hidden">
 
       {/* Ambient glow */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none z-0 rounded-full opacity-20"
+      <div
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none z-0 rounded-full opacity-20"
         style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%)', filter: 'blur(80px)' }}
       />
 
@@ -152,23 +156,25 @@ export default function ChatPage() {
         <div className="w-full max-w-4xl py-8 flex flex-col gap-6 items-center">
 
           {isFirstMessage ? (
-            <div className="flex flex-col items-center mt-8 w-full animate-fade-in text-center">
-              {/* Big OrchestrAI logo */}
+            <div className="flex flex-col items-center mt-6 w-full animate-fade-in text-center">
+
+              {/* Big OrchestrAI logo — 120px, same as landing page */}
               <div
-                className="mb-6 relative"
+                className="mb-7"
                 style={{
-                  width: 80,
-                  height: 80,
+                  width: 120,
+                  height: 120,
                   borderRadius: '50%',
                   overflow: 'hidden',
-                  boxShadow: '0 0 0 2px rgba(99,102,241,0.4), 0 0 40px rgba(99,102,241,0.25)',
+                  flexShrink: 0,
+                  boxShadow: '0 0 0 2.5px rgba(99,102,241,0.45), 0 0 48px rgba(99,102,241,0.28)',
                 }}
               >
                 <Image
                   src="/logo.jpg"
                   alt="OrchestrAI"
-                  width={80}
-                  height={80}
+                  width={120}
+                  height={120}
                   className="w-full h-full object-cover"
                   priority
                 />
@@ -176,7 +182,7 @@ export default function ChatPage() {
 
               <h1 className="font-display text-4xl md:text-[52px] font-semibold tracking-tight text-foreground mb-4 leading-tight min-h-[1.2em]">
                 {greetings}
-                {greetings.length < getGreeting().length && (
+                {!greetingDone && (
                   <span className="inline-block w-[3px] h-[0.85em] bg-white ml-1 align-middle animate-pulse" />
                 )}
               </h1>
@@ -228,7 +234,6 @@ export default function ChatPage() {
                 : '0 8px 24px -8px rgba(0,0,0,0.6)',
             }}
           >
-            {/* Textarea — grows with content, min 2 rows when focused */}
             <div className="px-4 pt-4 pb-[64px]">
               <textarea
                 ref={inputRef}

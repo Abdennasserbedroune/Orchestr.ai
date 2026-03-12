@@ -12,8 +12,7 @@ import {
   Box,
   Mic,
   CornerDownLeft,
-  X,
-  Zap
+  X
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -28,74 +27,143 @@ const MODES = [
   { label: 'Image', icon: ImageIcon },
 ]
 
+/** Returns a grammatically correct, time-aware greeting in French — no truncation */
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return 'Bonjour ! Que puis-je faire pour vous ?'
+  if (hour >= 12 && hour < 18) return 'Bon après-midi ! Comment puis-je vous aider ?'
+  if (hour >= 18 && hour < 22) return 'Bonsoir ! Comment puis-je vous aider ?'
+  return 'Vous travaillez tard… Je suis là pour vous.'
+}
+
 export default function Home() {
   const [showBanner, setShowBanner] = useState(true)
-  const fullText = 'Bonsoir ! On travaille tard ?'
   const [greetings, setGreetings] = useState('')
+  const [done, setDone] = useState(false)
 
   useEffect(() => {
+    const fullText = getGreeting()
+    setGreetings('')
+    setDone(false)
     let i = 0
     const timer = setInterval(() => {
       if (i < fullText.length) {
-        setGreetings(current => current + fullText.charAt(i))
+        setGreetings(cur => cur + fullText.charAt(i))
         i++
       } else {
         clearInterval(timer)
+        setDone(true)
       }
-    }, 50)
+    }, 42)
     return () => clearInterval(timer)
   }, [])
 
   return (
     <div className="relative min-h-screen flex flex-col bg-bg overflow-hidden font-sans">
 
-      {/* Top Navbar */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6">
+      {/* Ambient glow — same as chat page */}
+      <div
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none rounded-full opacity-20 -z-10"
+        style={{
+          background: 'radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+        }}
+      />
+
+      {/* Minimal Navbar — logo + brand name + login only, no nav links */}
+      <nav className="relative z-10 flex items-center justify-between px-8 py-5">
         <div className="flex items-center gap-3 cursor-pointer">
-          <Image src="/logo.jpg" alt="Orchestrai Logo" width={32} height={32} className="rounded-md object-contain" />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              boxShadow: '0 0 0 1.5px rgba(99,102,241,0.4), 0 0 16px rgba(99,102,241,0.2)',
+              flexShrink: 0,
+            }}
+          >
+            <Image
+              src="/logo.jpg"
+              alt="OrchestrAI Logo"
+              width={40}
+              height={40}
+              className="w-full h-full object-cover"
+              priority
+            />
+          </div>
           <span className="font-display font-medium text-lg text-foreground tracking-tight">Orchestrai</span>
         </div>
 
-        <div className="hidden md:flex items-center gap-8 text-sm text-foreground/70 font-medium">
-          <Link href="#" className="hover:text-foreground transition-colors">Tutoriels</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Tarifs</Link>
-          <Link href="#" className="hover:text-foreground transition-colors">Mobile</Link>
-        </div>
+        {/* No Tutoriels / Tarifs / Mobile links */}
 
         <div>
-          <Link href="/login" className="text-sm font-medium text-foreground hover:opacity-80 transition-opacity bg-white/5 border border-white/10 px-5 py-2.5 rounded-full hover:bg-white/10">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-foreground hover:opacity-80 transition-opacity bg-white/5 border border-white/10 px-5 py-2.5 rounded-full hover:bg-white/10"
+          >
             Commencer
           </Link>
         </div>
       </nav>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 -mt-10">
+      {/* Main Content — matches chat page hero exactly */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
 
-        {/* Hero Section */}
+        {/* Big logo — same size as chat page hero (120px) */}
+        <div
+          className="mb-7 animate-fade-in"
+          style={{
+            width: 120,
+            height: 120,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            boxShadow: '0 0 0 2.5px rgba(99,102,241,0.45), 0 0 48px rgba(99,102,241,0.28)',
+          }}
+        >
+          <Image
+            src="/logo.jpg"
+            alt="OrchestrAI"
+            width={120}
+            height={120}
+            className="w-full h-full object-cover"
+            priority
+          />
+        </div>
+
+        {/* Greeting — same font/size as chat page */}
         <div className="text-center mb-8 animate-fade-in">
-          <h1 className="font-display text-4xl md:text-[52px] font-semibold tracking-tight text-foreground mb-4 leading-tight">
+          <h1 className="font-display text-4xl md:text-[52px] font-semibold tracking-tight text-foreground mb-4 leading-tight min-h-[1.2em]">
             {greetings}
+            {!done && (
+              <span className="inline-block w-[3px] h-[0.85em] bg-white ml-1 align-middle animate-pulse" />
+            )}
           </h1>
-          <p className="text-[#a1a1aa] text-base font-normal">
-            Choisis un mode pour commencer avec des modèles et exemples
+          <p className="text-[#71717a] text-[15px] font-normal">
+            Choisissez un domaine pour commencer ou décrivez votre besoin directement.
           </p>
         </div>
 
         {/* Modes Row */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8 max-w-4xl animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        <div
+          className="flex flex-wrap items-center justify-center gap-2.5 mb-8 max-w-4xl animate-slide-up"
+          style={{ animationDelay: '0.1s' }}
+        >
           {MODES.map((mode) => (
             <button
               key={mode.label}
-              className="flex items-center gap-2 px-4 py-2 rounded-[14px] border border-white/[0.08] bg-[#111111] hover:bg-[#1f1f1f] transition-all text-[15px] font-medium text-[#e4e4e7] cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-[14px] border border-white/[0.07] bg-[#111111] hover:bg-[#1a1a1a] hover:border-white/[0.14] transition-all duration-200 text-[14px] font-medium text-[#a1a1aa] hover:text-[#fafafa] cursor-pointer"
             >
-              <mode.icon size={16} className="text-[#a1a1aa]" />
+              <mode.icon size={15} className="text-[#71717a]" />
               {mode.label}
             </button>
           ))}
         </div>
 
-        <div className="w-full max-w-[760px] flex flex-col gap-3 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <div
+          className="w-full max-w-[760px] flex flex-col gap-3 animate-slide-up"
+          style={{ animationDelay: '0.2s' }}
+        >
           {/* Promo Banner */}
           {showBanner && (
             <div className="relative flex items-center justify-between px-4 py-3 rounded-[20px] border border-white/[0.08] bg-[#141414] shadow-md transition-all">
@@ -114,48 +182,66 @@ export default function Home() {
             </div>
           )}
 
-          {/* Complex Input Box */}
-          <div className="relative w-full rounded-[28px] border border-white/[0.08] bg-[#171717] hover:border-white/[0.15] transition-all focus-within:border-white/30 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.8)]">
-            <div className="p-4 pb-16">
+          {/* Input box — same style as chat page */}
+          <div
+            className="relative w-full rounded-[28px] border transition-all duration-300"
+            style={{
+              background: '#131313',
+              borderColor: 'rgba(255,255,255,0.07)',
+              boxShadow: '0 8px 24px -8px rgba(0,0,0,0.6)',
+            }}
+          >
+            <div className="px-4 pt-4 pb-[64px]">
               <input
                 type="text"
-                placeholder="Décris ce dont tu as besoin d'aide..."
-                className="w-full bg-transparent text-[16px] text-foreground outline-none placeholder:text-[#71717a] ml-2"
+                placeholder="Décrivez ce dont vous avez besoin…"
+                className="w-full bg-transparent text-[16px] text-[#fafafa] outline-none focus:outline-none focus:ring-0 placeholder:text-[#3f3f46] ml-1 caret-white"
+                style={{ border: 'none', boxShadow: 'none' }}
                 onClick={() => { window.location.href = '/login' }}
                 readOnly
               />
             </div>
 
-            {/* Action Bar */}
+            {/* Action bar */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-transparent hover:bg-white/5 transition-colors text-[#a1a1aa]">
-                  <Paperclip size={20} strokeWidth={1.5} />
+              <div className="flex items-center gap-1">
+                <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all">
+                  <Paperclip size={18} strokeWidth={1.5} />
                 </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-transparent hover:bg-white/5 transition-colors text-[#a1a1aa] relative">
-                  <Box size={20} className="rounded-sm" strokeWidth={1.5} />
-                  {/* Small lock icon */}
-                  <div className="absolute top-[6px] right-[6px] w-[14px] h-[14px] bg-white rounded-full flex items-center justify-center">
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all relative">
+                  <Box size={18} strokeWidth={1.5} />
+                  <div className="absolute top-[5px] right-[5px] w-[13px] h-[13px] bg-white rounded-full flex items-center justify-center">
+                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
                   </div>
                 </button>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-transparent hover:bg-white/5 transition-colors text-[#a1a1aa]">
-                  <Mic size={20} strokeWidth={1.5} />
+              <div className="flex items-center gap-1">
+                <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all">
+                  <Mic size={18} strokeWidth={1.5} />
                 </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[#3f3f46] hover:bg-white transition-all text-white hover:text-black shadow-lg">
-                  <CornerDownLeft size={18} strokeWidth={2.5} />
+                <button
+                  className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200"
+                  style={{
+                    background: '#1f1f1f',
+                    color: '#3f3f46',
+                  }}
+                  onClick={() => { window.location.href = '/login' }}
+                >
+                  <CornerDownLeft size={16} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
           </div>
+
+          <p className="text-center text-[11px] text-[#2a2a2a] mt-3 font-mono">
+            Orchestrai peut commettre des erreurs. Vérifiez les informations importantes.
+          </p>
         </div>
       </main>
-
-      {/* Background glow similar to Kortix */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vh] bg-gradient-to-b from-brand/10 to-transparent blur-[120px] pointer-events-none -z-10 rounded-full opacity-30"></div>
     </div>
   )
 }
