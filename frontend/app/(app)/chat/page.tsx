@@ -19,13 +19,12 @@ function createId() {
   return Math.random().toString(36).slice(2, 10)
 }
 
-/** Returns a grammatically correct, time-aware greeting in French */
 function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour >= 5 && hour < 12) return 'Bonjour ! Que puis-je faire pour vous ?'
-  if (hour >= 12 && hour < 18) return 'Bon après-midi ! Comment puis-je vous aider ?'
-  if (hour >= 18 && hour < 22) return 'Bonsoir ! Comment puis-je vous aider ?'
-  return 'Vous travaillez tard… Je suis là pour vous.'
+  const h = new Date().getHours()
+  if (h >= 5 && h < 12) return 'Orchestrez vos agents. Automatisez l’avenir.'
+  if (h >= 12 && h < 18) return 'Vos agents travaillent. Vous dirigez.'
+  if (h >= 18 && h < 22) return 'L’orchestration ne dort jamais.'
+  return 'Pendant que vous dormez, vos agents agissent.'
 }
 
 export default function ChatPage() {
@@ -41,7 +40,6 @@ export default function ChatPage() {
   const abortRef = useRef<AbortController | null>(null)
   const messagesRef = useRef(messages)
 
-  // ── Typewriter greeting ───────────────────────────────────
   useEffect(() => {
     if (messages.length === 0) {
       const fullText = getGreeting()
@@ -62,12 +60,8 @@ export default function ChatPage() {
   }, [messages.length])
 
   useEffect(() => { messagesRef.current = messages }, [messages])
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  // Auto-resize textarea
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto'
@@ -75,22 +69,17 @@ export default function ChatPage() {
     }
   }, [input])
 
-  // ── Send message ──────────────────────────────────────────
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim()
     if (!trimmed || loading) return
-
     const userMsg: Message = { id: createId(), role: 'user', content: trimmed }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setLoading(true)
-
     const assistantId = createId()
     setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '', streaming: true }])
-
     const history = [...messagesRef.current, userMsg].map(({ role, content }) => ({ role, content }))
     abortRef.current = new AbortController()
-
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -98,33 +87,21 @@ export default function ChatPage() {
         body: JSON.stringify({ messages: history }),
         signal: abortRef.current.signal,
       })
-
       if (!res.ok || !res.body) throw new Error(`Erreur API ${res.status}`)
-
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
-
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
-        setMessages(prev =>
-          prev.map(m => m.id === assistantId ? { ...m, content: m.content + chunk } : m)
-        )
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: m.content + chunk } : m))
       }
-
-      setMessages(prev =>
-        prev.map(m => m.id === assistantId ? { ...m, streaming: false } : m)
-      )
+      setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, streaming: false } : m))
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === assistantId
-            ? { ...m, content: 'Une erreur est survenue. Veuillez réessayer.', streaming: false }
-            : m
-        )
-      )
+      setMessages(prev => prev.map(m =>
+        m.id === assistantId ? { ...m, content: 'Une erreur est survenue. Veuillez réessayer.', streaming: false } : m
+      ))
     } finally {
       setLoading(false)
       abortRef.current = null
@@ -133,10 +110,7 @@ export default function ChatPage() {
   }, [loading])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage(input)
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) }
   }
 
   const isFirstMessage = messages.length === 0
@@ -144,62 +118,27 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] md:h-screen max-h-[calc(100vh-56px)] md:max-h-screen items-center relative overflow-hidden">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none z-0 rounded-full opacity-20"
+        style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%)', filter: 'blur(80px)' }} />
 
-      {/* Ambient glow */}
-      <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none z-0 rounded-full opacity-20"
-        style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%)', filter: 'blur(80px)' }}
-      />
-
-      {/* Messages / Hero */}
       <div className="flex-1 w-full overflow-y-auto px-4 md:px-8 mt-12 z-10 flex flex-col items-center">
         <div className="w-full max-w-4xl py-8 flex flex-col gap-6 items-center">
-
           {isFirstMessage ? (
             <div className="flex flex-col items-center mt-6 w-full animate-fade-in text-center">
-
-              {/* Big OrchestrAI logo — 120px, same as landing page */}
-              <div
-                className="mb-7"
-                style={{
-                  width: 120,
-                  height: 120,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                  boxShadow: '0 0 0 2.5px rgba(99,102,241,0.45), 0 0 48px rgba(99,102,241,0.28)',
-                }}
-              >
-                <Image
-                  src="/logo.jpg"
-                  alt="OrchestrAI"
-                  width={120}
-                  height={120}
-                  className="w-full h-full object-cover"
-                  priority
-                />
+              <div className="mb-7" style={{ width: 120, height: 120, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, boxShadow: '0 0 0 2.5px rgba(99,102,241,0.45), 0 0 48px rgba(99,102,241,0.28)' }}>
+                <Image src="/logo.jpg" alt="OrchestrAI" width={120} height={120} className="w-full h-full object-cover" priority />
               </div>
-
               <h1 className="font-display text-4xl md:text-[52px] font-semibold tracking-tight text-foreground mb-4 leading-tight min-h-[1.2em]">
                 {greetings}
-                {!greetingDone && (
-                  <span className="inline-block w-[3px] h-[0.85em] bg-white ml-1 align-middle animate-pulse" />
-                )}
+                {!greetingDone && <span className="inline-block w-[3px] h-[0.85em] bg-white ml-1 align-middle animate-pulse" />}
               </h1>
               <p className="text-[#71717a] text-[15px] font-normal mb-10">
                 Choisissez un domaine pour commencer ou décrivez votre besoin directement.
               </p>
-
-              <div
-                className="flex flex-wrap justify-center gap-2 w-full max-w-3xl mb-8 animate-slide-up"
-                style={{ animationDelay: '0.1s' }}
-              >
+              <div className="flex flex-wrap justify-center gap-2 w-full max-w-3xl mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                 {CATEGORIES.map((cat, i) => (
-                  <button
-                    key={i}
-                    onClick={() => { setInput(cat); inputRef.current?.focus() }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-[14px] border border-white/[0.07] bg-[#111111] hover:bg-[#1a1a1a] hover:border-white/[0.14] transition-all duration-200 text-[14px] font-medium text-[#a1a1aa] hover:text-[#fafafa] cursor-pointer"
-                  >
+                  <button key={i} onClick={() => { setInput(cat); inputRef.current?.focus() }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-[14px] border border-white/[0.07] bg-[#111111] hover:bg-[#1a1a1a] hover:border-white/[0.14] transition-all duration-200 text-[14px] font-medium text-[#a1a1aa] hover:text-[#fafafa] cursor-pointer">
                     {cat}
                   </button>
                 ))}
@@ -207,33 +146,21 @@ export default function ChatPage() {
             </div>
           ) : (
             <div className="w-full max-w-[760px] flex flex-col gap-6">
-              {messages.map(msg => (
-                <ChatMessageBubble key={msg.id} message={msg} />
-              ))}
+              {messages.map(msg => <ChatMessageBubble key={msg.id} message={msg} />)}
             </div>
           )}
-
           <div ref={bottomRef} />
         </div>
       </div>
 
-      {/* Input area */}
       <div className="w-full px-4 md:px-8 py-6 z-10 flex justify-center pb-10">
-        <div
-          className="w-full transition-all duration-300 ease-out"
-          style={{ maxWidth: inputActive ? '860px' : '700px' }}
-        >
-          {/* Input box */}
-          <div
-            className="relative w-full rounded-[28px] border transition-all duration-300"
+        <div className="w-full transition-all duration-300 ease-out" style={{ maxWidth: inputActive ? '860px' : '700px' }}>
+          <div className="relative w-full rounded-[28px] border transition-all duration-300"
             style={{
               background: '#131313',
               borderColor: inputActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.07)',
-              boxShadow: inputActive
-                ? '0 20px 56px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(29,78,216,0.14)'
-                : '0 8px 24px -8px rgba(0,0,0,0.6)',
-            }}
-          >
+              boxShadow: inputActive ? '0 20px 56px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(29,78,216,0.14)' : '0 8px 24px -8px rgba(0,0,0,0.6)',
+            }}>
             <div className="px-4 pt-4 pb-[64px]">
               <textarea
                 ref={inputRef}
@@ -246,60 +173,34 @@ export default function ChatPage() {
                 rows={focused || input.length > 0 ? 2 : 1}
                 className="w-full bg-transparent text-[16px] text-[#fafafa] outline-none focus:outline-none focus:ring-0 placeholder:text-[#3f3f46] ml-1 caret-white resize-none overflow-hidden leading-relaxed"
                 style={{ border: 'none', boxShadow: 'none', minHeight: '28px', maxHeight: '160px' }}
-                aria-label="Message"
-                disabled={loading}
-                autoComplete="off"
+                aria-label="Message" disabled={loading} autoComplete="off"
               />
             </div>
-
-            {/* Action bar */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <button
-                  className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all"
-                  title="Joindre un fichier"
-                >
-                  <Paperclip size={18} strokeWidth={1.5} />
-                </button>
-                <button
-                  className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all relative"
-                  title="Outils"
-                >
+                <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all" title="Joindre un fichier"><Paperclip size={18} strokeWidth={1.5} /></button>
+                <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all relative" title="Outils">
                   <Box size={18} strokeWidth={1.5} />
                   <div className="absolute top-[5px] right-[5px] w-[13px] h-[13px] bg-white rounded-full flex items-center justify-center">
-                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
+                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                   </div>
                 </button>
               </div>
-
               <div className="flex items-center gap-1">
-                <button
-                  className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all"
-                  title="Microphone"
-                >
-                  <Mic size={18} strokeWidth={1.5} />
-                </button>
-                <button
-                  onClick={() => sendMessage(input)}
-                  disabled={loading || !input.trim()}
+                <button className="w-9 h-9 flex items-center justify-center rounded-full text-[#3f3f46] hover:text-[#a1a1aa] hover:bg-white/[0.05] transition-all" title="Microphone"><Mic size={18} strokeWidth={1.5} /></button>
+                <button onClick={() => sendMessage(input)} disabled={loading || !input.trim()}
                   className="w-9 h-9 flex items-center justify-center rounded-full transition-all duration-200"
                   style={{
                     background: input.trim() && !loading ? '#ffffff' : '#1f1f1f',
                     color: input.trim() && !loading ? '#000000' : '#3f3f46',
                     cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
                     boxShadow: input.trim() && !loading ? '0 0 20px rgba(255,255,255,0.2)' : 'none',
-                  }}
-                  title="Envoyer"
-                >
+                  }} title="Envoyer">
                   <CornerDownLeft size={16} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
           </div>
-
           <p className="text-center text-[11px] text-[#2a2a2a] mt-3 font-mono">
             Orchestrai peut commettre des erreurs. Vérifiez les informations importantes.
           </p>
