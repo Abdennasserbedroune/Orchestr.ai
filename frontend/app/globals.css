@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ── Design tokens ─────────────────────────────────────────── */
 :root {
@@ -75,10 +77,10 @@ body {
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.animate-spin         { animation: spin 1s linear infinite; }
-.animate-pulse        { animation: pulse 2s ease-in-out infinite; }
-.animate-ping         { animation: ping 1s cubic-bezier(0,0,0.2,1) infinite; }
-.animate-fade-in-up   { animation: fadeInUp 0.35s ease forwards; }
+.animate-spin          { animation: spin 1s linear infinite; }
+.animate-pulse         { animation: pulse 2s ease-in-out infinite; }
+.animate-ping          { animation: ping 1s cubic-bezier(0,0,0.2,1) infinite; }
+.animate-fade-in-up    { animation: fadeInUp 0.35s ease forwards; }
 .animate-slide-in-left { animation: slideInLeft 0.3s ease forwards; }
 
 /* ── Focus ring ─────────────────────────────────────────────── */
