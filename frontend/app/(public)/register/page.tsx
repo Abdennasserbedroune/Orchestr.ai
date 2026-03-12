@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, AlertCircle, Check } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, Check, Zap, Rocket } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 
@@ -15,22 +15,179 @@ function slugify(val: string) {
 
 type Step = 'account' | 'workspace'
 
+// ── Right panel: same animated agent graph as login, but different log for each step ──
+function AgentPanel({ step }: { step: Step }) {
+  const agents = [
+    { id: 'orchestr', label: 'OrchestrAI', role: 'Orchestrator', color: '#6366f1', x: 50, y: 18 },
+    { id: 'claude',   label: 'Claude',      role: 'Reasoning',   color: '#a78bfa', x: 20, y: 48 },
+    { id: 'n8n',      label: 'n8n',         role: 'Automation',  color: '#fb923c', x: 50, y: 78 },
+    { id: 'openclaw', label: 'OpenClaw',    role: 'Scraping',    color: '#34d399', x: 80, y: 48 },
+  ]
+  const connections = [
+    { from: agents[0], to: agents[1] },
+    { from: agents[0], to: agents[2] },
+    { from: agents[0], to: agents[3] },
+    { from: agents[1], to: agents[2] },
+    { from: agents[3], to: agents[2] },
+  ]
+
+  const accountLogs = [
+    { t: '00:00:01', agent: 'OrchestrAI', msg: 'Initializing agent runtime…',        color: '#6366f1' },
+    { t: '00:00:02', agent: 'Claude',     msg: 'Loading reasoning model v3…',        color: '#a78bfa' },
+    { t: '00:00:03', agent: 'OpenClaw',   msg: 'Connecting scraping engine…',         color: '#34d399' },
+    { t: '00:00:04', agent: 'n8n',        msg: 'Registering workflow triggers…',     color: '#fb923c' },
+    { t: '00:00:05', agent: 'OrchestrAI', msg: 'Awaiting new user…',                 color: '#6366f1' },
+    { t: '00:00:06', agent: 'OrchestrAI', msg: 'Account slot reserved ✓',            color: '#6366f1' },
+  ]
+  const workspaceLogs = [
+    { t: '00:01:00', agent: 'OrchestrAI', msg: 'User authenticated ✓',               color: '#6366f1' },
+    { t: '00:01:01', agent: 'OrchestrAI', msg: 'Provisioning workspace…',            color: '#6366f1' },
+    { t: '00:01:02', agent: 'Claude',     msg: 'Configuring context window…',        color: '#a78bfa' },
+    { t: '00:01:03', agent: 'n8n',        msg: 'Creating default workflows…',        color: '#fb923c' },
+    { t: '00:01:04', agent: 'OpenClaw',   msg: 'Mounting data connectors…',          color: '#34d399' },
+    { t: '00:01:05', agent: 'OrchestrAI', msg: 'Workspace ready to launch 🚀',         color: '#6366f1' },
+  ]
+  const logLines = step === 'account' ? accountLogs : workspaceLogs
+
+  const accountPills = [
+    { label: 'Claude',     status: 'Standby',   color: '#a78bfa', pulse: false },
+    { label: 'n8n',        status: 'Standby',   color: '#fb923c', pulse: false },
+    { label: 'OpenClaw',   status: 'Standby',   color: '#34d399', pulse: false },
+    { label: 'OrchestrAI', status: 'Waiting',   color: '#6366f1', pulse: true  },
+  ]
+  const workspacePills = [
+    { label: 'Claude',     status: 'Configuring', color: '#a78bfa', pulse: true  },
+    { label: 'n8n',        status: 'Building',    color: '#fb923c', pulse: true  },
+    { label: 'OpenClaw',   status: 'Mounting',    color: '#34d399', pulse: true  },
+    { label: 'OrchestrAI', status: 'Routing',     color: '#6366f1', pulse: true  },
+  ]
+  const pills = step === 'account' ? accountPills : workspacePills
+
+  return (
+    <div
+      className="relative w-full h-full flex flex-col justify-center px-10 py-12 overflow-hidden select-none"
+      style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #0d0d18 50%, #0a0a0f 100%)' }}
+    >
+      {/* Grid */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(99,102,241,1) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,1) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
+      {/* Radial glow */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 65%)', filter: 'blur(40px)' }}
+      />
+
+      {/* Step-aware title */}
+      <div className="relative z-10 mb-6">
+        <p className="font-mono text-[11px] text-[#3f3f46] uppercase tracking-[0.2em] mb-1">
+          {step === 'account' ? 'Agent Boot Sequence' : 'Workspace Provisioning'}
+        </p>
+        <p className="text-[13px] text-[#52525b]">
+          {step === 'account'
+            ? 'Vos agents se préparent à vous accueillir.'
+            : 'Chaque workspace est un système d’agents dédié.'}
+        </p>
+      </div>
+
+      {/* SVG node graph */}
+      <div className="relative z-10 mb-8">
+        <svg viewBox="0 0 100 100" className="w-full" style={{ height: '240px' }}>
+          {connections.map((c, i) => (
+            <line key={i}
+              x1={c.from.x} y1={c.from.y} x2={c.to.x} y2={c.to.y}
+              stroke="rgba(99,102,241,0.18)" strokeWidth="0.5" strokeDasharray="2 2"
+            />
+          ))}
+          {connections.map((c, i) => (
+            <circle key={`p${i}`} r="0.8" fill="#6366f1" opacity="0.7">
+              <animateMotion dur={`${1.8 + i * 0.4}s`} repeatCount="indefinite"
+                path={`M ${c.from.x} ${c.from.y} L ${c.to.x} ${c.to.y}`} />
+            </circle>
+          ))}
+          {agents.map((a) => (
+            <g key={a.id}>
+              <circle cx={a.x} cy={a.y} r="5.5" fill="none" stroke={a.color} strokeWidth="0.4" opacity="0.3">
+                <animate attributeName="r" values="5.5;7;5.5" dur="2.5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.3;0;0.3" dur="2.5s" repeatCount="indefinite" />
+              </circle>
+              <circle cx={a.x} cy={a.y} r="4.5" fill={`${a.color}18`} stroke={a.color} strokeWidth="0.6" />
+              <circle cx={a.x} cy={a.y} r="1.5" fill={a.color} />
+              <text x={a.x} y={a.y + 8} textAnchor="middle" fill="#e4e4e7" fontSize="3.2" fontFamily="monospace" fontWeight="600">{a.label}</text>
+              <text x={a.x} y={a.y + 11.5} textAnchor="middle" fill="#52525b" fontSize="2.5" fontFamily="monospace">{a.role}</text>
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      {/* Live terminal log */}
+      <div
+        className="relative z-10 rounded-[16px] border border-white/[0.06] overflow-hidden"
+        style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}
+      >
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.05]">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+          </div>
+          <span className="font-mono text-[10px] text-[#3f3f46] ml-2">
+            orchestrai — {step === 'account' ? 'boot-sequence' : 'workspace-init'}
+          </span>
+          <span className="ml-auto flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
+            <span className="font-mono text-[9px] text-[#34d399]">LIVE</span>
+          </span>
+        </div>
+        <div className="px-4 py-3 flex flex-col gap-1.5">
+          {logLines.map((l, i) => (
+            <div key={i} className="flex items-start gap-2 font-mono text-[11px]">
+              <span className="text-[#3f3f46] flex-shrink-0">{l.t}</span>
+              <span className="flex-shrink-0 font-semibold" style={{ color: l.color }}>[{l.agent}]</span>
+              <span className="text-[#71717a]">{l.msg}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Agent status pills */}
+      <div className="relative z-10 flex flex-wrap gap-2 mt-5">
+        {pills.map((a) => (
+          <div
+            key={a.label}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border"
+            style={{ background: `${a.color}10`, borderColor: `${a.color}30` }}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${a.pulse ? 'animate-pulse' : ''}`}
+              style={{ background: a.color }}
+            />
+            <span className="font-mono text-[11px] font-medium" style={{ color: a.color }}>{a.label}</span>
+            <span className="font-mono text-[10px] text-[#52525b]">{a.status}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialStep = (searchParams.get('step') as Step | null) ?? 'account'
 
   const [step, setStep] = useState<Step>(initialStep)
-
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [show, setShow] = useState(false)
-
   const [wsName, setWsName] = useState('')
   const [wsSlug, setWsSlug] = useState('')
   const [slugEdited, setSlugEdited] = useState(false)
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -69,7 +226,7 @@ function RegisterForm() {
       body: JSON.stringify({ name: wsName.trim(), slug: wsSlug }),
     })
     const json = await res.json()
-    if (!res.ok) { setError(json.error ?? 'La création de l\'espace de travail a échoué.'); setLoading(false); return }
+    if (!res.ok) { setError(json.error ?? "La création de l'espace de travail a échoué."); setLoading(false); return }
     router.push('/chat')
   }
 
@@ -80,50 +237,54 @@ function RegisterForm() {
     return 'strong'
   })()
   const strengthColor: Record<string, string> = { weak: '#EF4444', fair: '#F59E0B', strong: '#22C55E' }
+  const strengthLabel: Record<string, string> = { weak: 'faible', fair: 'moyen', strong: 'fort' }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex bg-bg overflow-hidden font-sans">
 
-      {/* Very faint background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/5 blur-[120px] rounded-full pointer-events-none" />
+      {/* LEFT — Registration form */}
+      <div className="flex flex-col justify-center w-full max-w-[480px] flex-shrink-0 px-12 py-16 relative z-10">
+        {/* Faint glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-brand/5 blur-[100px] rounded-full pointer-events-none" />
 
-      {/* Card */}
-      <div className="relative w-full max-w-[420px] rounded-[24px] border border-white/[0.08] bg-[#111111] p-10 animate-slide-up shadow-2xl">
-
-        {/* Logo */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <Image src="/logo.jpg" alt="Logo" width={48} height={48} className="rounded-xl object-contain shadow-lg" />
-          <h1 className="font-display text-[26px] font-semibold text-foreground tracking-tight text-center">
-            {step === 'account' ? 'Créer un compte' : 'Créer l\'espace'}
+        {/* Logo + heading */}
+        <div className="flex flex-col gap-3 mb-8 relative">
+          <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', boxShadow: '0 0 0 2px rgba(99,102,241,0.4), 0 0 28px rgba(99,102,241,0.22)' }}>
+            <Image src="/logo.jpg" alt="OrchestrAI" width={72} height={72} className="w-full h-full object-cover" priority />
+          </div>
+          <h1 className="font-display text-[30px] font-semibold text-foreground tracking-tight mt-2">
+            {step === 'account' ? 'Créer un compte' : 'Votre espace agents'}
           </h1>
-          <p className="text-[14px] text-[#a1a1aa] text-center px-4">
-            {step === 'account' ? 'Rejoignez-nous en moins d\'une minute.' : 'Votre espace de travail est l\'endroit où vivent vos agents.'}
+          <p className="text-[15px] text-[#71717a]">
+            {step === 'account'
+              ? 'Rejoignez Orchestrai et lancez vos premiers agents.'
+              : 'Définissez l’espace où vivent et s’orchestrent vos agents.'}
           </p>
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center justify-center gap-3 mb-8">
+        <div className="flex items-center gap-3 mb-8 relative">
           {(['account', 'workspace'] as Step[]).map((s, i) => {
             const done = step === 'workspace' && s === 'account'
             const current = step === s
             return (
               <div key={s} className="flex items-center gap-2">
                 <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-mono transition-all duration-300"
+                  className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-mono font-bold transition-all duration-300"
                   style={{
-                    background: done ? 'transparent' : current ? 'white' : 'transparent',
-                    border: done ? '1px solid #22C55E' : current ? 'none' : '1px solid rgba(255,255,255,0.2)',
-                    color: done ? '#22C55E' : current ? 'black' : '#a1a1aa',
+                    background: done ? 'rgba(34,197,94,0.15)' : current ? 'white' : 'transparent',
+                    border: done ? '1px solid #22C55E' : current ? 'none' : '1px solid rgba(255,255,255,0.15)',
+                    color: done ? '#22C55E' : current ? 'black' : '#52525b',
                   }}
                 >
-                  {done ? <Check size={10} strokeWidth={3} /> : i + 1}
+                  {done ? <Check size={11} strokeWidth={3} /> : i + 1}
                 </div>
-                <span className={`text-[11px] uppercase tracking-wider font-semibold ${current ? 'text-white' : 'text-[#a1a1aa]'}`}>
+                <span className={`text-[12px] uppercase tracking-wider font-semibold transition-colors ${
+                  current ? 'text-white' : done ? 'text-[#22C55E]' : 'text-[#52525b]'
+                }`}>
                   {s === 'account' ? 'Compte' : 'Espace'}
                 </span>
-                {i === 0 && (
-                  <div className="w-[30px] h-px bg-white/10 mx-1" />
-                )}
+                {i === 0 && <div className="w-8 h-px bg-white/10 mx-1" />}
               </div>
             )
           })}
@@ -131,35 +292,42 @@ function RegisterForm() {
 
         {/* Error */}
         {error && (
-          <div className="flex items-center gap-3 rounded-[12px] px-4 py-3 mb-6 text-[14px] bg-red-500/10 border border-red-500/20 text-red-400" role="alert">
+          <div className="flex items-center gap-3 rounded-[12px] px-4 py-3 mb-6 text-[14px] bg-red-500/10 border border-red-500/20 text-red-400 relative" role="alert">
             <AlertCircle size={16} className="flex-shrink-0" />
             {error}
           </div>
         )}
 
+        {/* ── STEP 1: Account ── */}
         {step === 'account' && (
-          <form onSubmit={handleAccountSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={handleAccountSubmit} className="flex flex-col gap-4 relative" noValidate>
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="name">Nom complet</label>
               <input id="name" type="text" autoComplete="name" required value={name}
                 onChange={e => setName(e.target.value)} placeholder="Ada Lovelace"
-                className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-2.5 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]" disabled={loading} />
+                className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-3 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]"
+                disabled={loading} />
             </div>
+
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="reg-email">Email</label>
               <input id="reg-email" type="email" autoComplete="email" required value={email}
                 onChange={e => setEmail(e.target.value)} placeholder="vous@entreprise.com"
-                className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-2.5 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]" disabled={loading} />
+                className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-3 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]"
+                disabled={loading} />
             </div>
+
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="reg-password">Mot de passe</label>
               <div className="relative">
                 <input id="reg-password" type={show ? 'text' : 'password'} autoComplete="new-password"
                   required value={password} onChange={e => setPassword(e.target.value)}
-                  placeholder="Min. 8 caractères" className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-2.5 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b] pr-10" disabled={loading} />
+                  placeholder="Min. 8 caractères"
+                  className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-3 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b] pr-10"
+                  disabled={loading} />
                 <button type="button" onClick={() => setShow(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-[#a1a1aa] transition-colors"
-                  aria-label={show ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>
+                  aria-label={show ? 'Masquer' : 'Afficher'}>
                   {show ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
@@ -172,71 +340,88 @@ function RegisterForm() {
                     }} />
                   </div>
                   <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: strengthColor[passwordStrength] }}>
-                    {passwordStrength === 'weak' ? 'faible' : passwordStrength === 'fair' ? 'moyen' : 'fort'}
+                    {strengthLabel[passwordStrength]}
                   </span>
                 </div>
               )}
             </div>
 
             <button type="submit" disabled={loading || !name || !email || !password}
-              className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 transition-colors rounded-[12px] py-3 text-[15px] font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-100 transition-colors rounded-[12px] py-3 text-[15px] font-semibold mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded-full border-2 border-black/20 border-t-black animate-spin" />
                   Création…
                 </span>
               ) : (
-                <span>Continuer</span>
+                <span className="flex items-center gap-2"><Zap size={15} /> Continuer</span>
               )}
             </button>
           </form>
         )}
 
+        {/* ── STEP 2: Workspace ── */}
         {step === 'workspace' && (
-          <form onSubmit={handleWorkspaceSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={handleWorkspaceSubmit} className="flex flex-col gap-4 relative" noValidate>
+            {/* Success nudge */}
+            <div className="flex items-center gap-3 rounded-[12px] px-4 py-3 mb-2 text-[14px] bg-green-500/10 border border-green-500/20 text-green-400">
+              <Check size={15} className="flex-shrink-0" />
+              Compte créé avec succès. Configurez votre espace d’agents.
+            </div>
+
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="ws-name">Nom de l'espace</label>
+              <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="ws-name">Nom de l’espace</label>
               <input id="ws-name" type="text" required value={wsName}
                 onChange={e => handleWsNameChange(e.target.value)}
-                placeholder="Acme Corp" className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-2.5 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]" disabled={loading} />
+                placeholder="Acme Corp"
+                className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-3 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]"
+                disabled={loading} />
             </div>
+
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="ws-slug">URL (slug)</label>
+              <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="ws-slug">URL de l’espace (slug)</label>
               <div className="relative flex items-center bg-[#18181b] border border-white/5 rounded-[12px] focus-within:border-white/20 transition-colors overflow-hidden">
                 <span className="pl-4 pr-1 text-[#52525b] font-mono text-[14px]">/</span>
                 <input id="ws-slug" type="text" required value={wsSlug}
                   onChange={e => { setSlugEdited(true); setWsSlug(slugify(e.target.value)) }}
-                  placeholder="acme-corp" className="w-full bg-transparent border-none py-2.5 pr-4 text-[15px] text-foreground outline-none placeholder:text-[#52525b] font-mono" disabled={loading} />
+                  placeholder="acme-corp"
+                  className="w-full bg-transparent border-none py-3 pr-4 text-[15px] text-foreground outline-none placeholder:text-[#52525b] font-mono"
+                  disabled={loading} />
               </div>
+              <p className="text-[12px] text-[#3f3f46] font-mono">orchestrai.ai/{wsSlug || 'votre-espace'}</p>
             </div>
+
             <button type="submit" disabled={loading || !wsName || wsSlug.length < 3}
-              className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 transition-colors rounded-[12px] py-3 text-[15px] font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-100 transition-colors rounded-[12px] py-3 text-[15px] font-semibold mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 rounded-full border-2 border-black/20 border-t-black animate-spin" />
-                  Création…
+                  Lancement…
                 </span>
               ) : (
-                <span>Lancer l'espace</span>
+                <span className="flex items-center gap-2"><Rocket size={15} /> Lancer l’espace</span>
               )}
             </button>
           </form>
         )}
 
-        <div className="flex justify-center mt-6">
-          <p className="text-[14px] text-[#a1a1aa] text-center">
-            Déjà un compte ?{' '}
-            <Link href="/login" className="text-white hover:underline font-medium transition-colors">
-              Se connecter
-            </Link>
-          </p>
-        </div>
+        <p className="text-[14px] text-[#a1a1aa] mt-8 relative">
+          Déjà un compte ?{' '}
+          <Link href="/login" className="text-white hover:underline font-medium transition-colors">Se connecter</Link>
+        </p>
+      </div>
+
+      {/* RIGHT — Animated agent panel */}
+      <div
+        className="flex-1 hidden lg:block relative overflow-hidden"
+        style={{ borderLeft: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <AgentPanel step={step} />
       </div>
     </div>
   )
 }
 
-// Bug 13: export wraps RegisterForm in Suspense so useSearchParams doesn't break build
 export default function RegisterPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-bg" />}>
