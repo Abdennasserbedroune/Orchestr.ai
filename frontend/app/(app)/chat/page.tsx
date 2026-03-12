@@ -1,8 +1,9 @@
-﻿'use client'
+'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Paperclip, Box, Mic, CornerDownLeft } from 'lucide-react'
 import { ChatMessageBubble } from '@/components/ChatMessage'
 import type { Message } from '@/components/ChatMessage'
+import Image from 'next/image'
 
 const CATEGORIES = [
   'Marketing digital',
@@ -35,7 +36,7 @@ export default function ChatPage() {
   const [greetings, setGreetings] = useState('')
 
   const bottomRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const messagesRef = useRef(messages)
 
@@ -62,6 +63,14 @@ export default function ChatPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto'
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 160) + 'px'
+    }
+  }, [input])
 
   // ── Send message ──────────────────────────────────────────
   const sendMessage = useCallback(async (text: string) => {
@@ -120,7 +129,7 @@ export default function ChatPage() {
     }
   }, [loading])
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage(input)
@@ -143,10 +152,30 @@ export default function ChatPage() {
         <div className="w-full max-w-4xl py-8 flex flex-col gap-6 items-center">
 
           {isFirstMessage ? (
-            <div className="flex flex-col items-center mt-12 w-full animate-fade-in text-center">
+            <div className="flex flex-col items-center mt-8 w-full animate-fade-in text-center">
+              {/* Big OrchestrAI logo */}
+              <div
+                className="mb-6 relative"
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  boxShadow: '0 0 0 2px rgba(99,102,241,0.4), 0 0 40px rgba(99,102,241,0.25)',
+                }}
+              >
+                <Image
+                  src="/logo.jpg"
+                  alt="OrchestrAI"
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                  priority
+                />
+              </div>
+
               <h1 className="font-display text-4xl md:text-[52px] font-semibold tracking-tight text-foreground mb-4 leading-tight min-h-[1.2em]">
                 {greetings}
-                {/* Blinking cursor while typing */}
                 {greetings.length < getGreeting().length && (
                   <span className="inline-block w-[3px] h-[0.85em] bg-white ml-1 align-middle animate-pulse" />
                 )}
@@ -186,31 +215,32 @@ export default function ChatPage() {
       <div className="w-full px-4 md:px-8 py-6 z-10 flex justify-center pb-10">
         <div
           className="w-full transition-all duration-300 ease-out"
-          style={{ maxWidth: inputActive ? '820px' : '720px' }}
+          style={{ maxWidth: inputActive ? '860px' : '700px' }}
         >
-          {/* Input box — no outline/ring on focus */}
+          {/* Input box */}
           <div
             className="relative w-full rounded-[28px] border transition-all duration-300"
             style={{
               background: '#131313',
               borderColor: inputActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.07)',
               boxShadow: inputActive
-                ? '0 16px 48px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(29,78,216,0.12)'
+                ? '0 20px 56px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(29,78,216,0.14)'
                 : '0 8px 24px -8px rgba(0,0,0,0.6)',
             }}
           >
-            <div className="p-4 pb-[60px]">
-              <input
+            {/* Textarea — grows with content, min 2 rows when focused */}
+            <div className="px-4 pt-4 pb-[64px]">
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
                 placeholder="Décrivez ce dont vous avez besoin…"
-                className="w-full bg-transparent text-[16px] text-[#fafafa] outline-none focus:outline-none focus:ring-0 placeholder:text-[#3f3f46] ml-1 caret-white"
-                style={{ border: 'none', boxShadow: 'none' }}
+                rows={focused || input.length > 0 ? 2 : 1}
+                className="w-full bg-transparent text-[16px] text-[#fafafa] outline-none focus:outline-none focus:ring-0 placeholder:text-[#3f3f46] ml-1 caret-white resize-none overflow-hidden leading-relaxed"
+                style={{ border: 'none', boxShadow: 'none', minHeight: '28px', maxHeight: '160px' }}
                 aria-label="Message"
                 disabled={loading}
                 autoComplete="off"
