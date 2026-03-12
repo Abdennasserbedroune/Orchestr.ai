@@ -9,27 +9,27 @@ interface WorkflowsSectionProps {
 }
 
 const COMPLEXITY_OPTIONS = [
-  { value: 'all',    label: 'All' },
-  { value: 'low',    label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high',   label: 'High' },
+  { value: 'all', label: 'Tous' },
+  { value: 'low', label: 'Faible' },
+  { value: 'medium', label: 'Moyenne' },
+  { value: 'high', label: 'Élevée' },
 ]
 
 const PER_PAGE = 12
 
 export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
   // ── State ──────────────────────────────────────────────────────────────
-  const [workflows,   setWorkflows  ] = useState<WorkflowItem[]>([])
-  const [total,       setTotal      ] = useState(0)
-  const [totalPages,  setTotalPages ] = useState(1)
-  const [page,        setPage       ] = useState(1)
-  const [loading,     setLoading    ] = useState(true)
-  const [error,       setError      ] = useState<string | null>(null)
+  const [workflows, setWorkflows] = useState<WorkflowItem[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const [search,     setSearch    ] = useState('')
+  const [search, setSearch] = useState('')
   const [complexity, setComplexity] = useState('all')
   const [categories, setCategories] = useState<string[]>([])
-  const [category,   setCategory  ] = useState('')
+  const [category, setCategory] = useState('')
 
   // Track whether we should show filters (avoids layout shift on first load)
   const [filtersReady, setFiltersReady] = useState(false)
@@ -56,10 +56,10 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
       try {
         const qs = new URLSearchParams({
           agent_slug: agentSlug,
-          page:       String(targetPage),
-          per_page:   String(PER_PAGE),
+          page: String(targetPage),
+          per_page: String(PER_PAGE),
           complexity: complexityVal,
-          search:     searchVal,
+          search: searchVal,
         })
         if (categoryVal) qs.set('category', categoryVal)
 
@@ -71,7 +71,7 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
         setTotal(data.total)
         setTotalPages(data.total_pages)
       } catch {
-        setError('Could not load workflows. The live API may be temporarily unavailable.')
+        setError('Impossible de charger les workflows. L&apos;API peut être temporairement indisponible.')
       } finally {
         setLoading(false)
       }
@@ -92,9 +92,9 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
   // Triggered by complexity or category changes
   function applyFilters(
     newComplexity = complexity,
-    newCategory   = category,
-    newSearch     = search,
-    newPage       = 1,
+    newCategory = category,
+    newSearch = search,
+    newPage = 1,
   ) {
     setPage(newPage)
     fetchPage(newPage, newSearch, newComplexity, newCategory)
@@ -127,15 +127,8 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
       {/* ── Section header ───────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <p className="section-label">Workflows</p>
-          <span
-            className="chip font-mono text-2xs"
-            style={{
-              background:  'rgba(99,102,241,0.08)',
-              borderColor: 'rgba(99,102,241,0.2)',
-              color:       'var(--color-brand)',
-            }}
-          >
+          <p className="text-[13px] font-bold uppercase tracking-widest text-[#a1a1aa]">Workflows</p>
+          <span className="chip font-mono text-[10px] bg-brand/10 border-brand/20 text-brand">
             <Zap size={9} /> n8n
           </span>
         </div>
@@ -153,16 +146,15 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
 
           {/* Search */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 group">
             <Search
-              size={13}
-              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: 'var(--color-muted)' }}
+              size={14}
+              className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#52525b] group-focus-within:text-white transition-colors"
             />
             <input
               type="text"
-              className="input pl-8 text-sm rounded-xl"
-              placeholder="Search workflows…"
+              className="w-full bg-[#111111] border border-white/[0.06] focus:border-white/[0.15] rounded-[16px] pl-10 pr-4 py-2.5 text-sm text-foreground outline-none transition-all placeholder:text-[#52525b]"
+              placeholder="Rechercher des workflows…"
               value={search}
               onChange={handleSearchChange}
               aria-label="Search workflows"
@@ -172,15 +164,14 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
           <div className="flex items-center gap-2 flex-wrap">
             {/* Category dropdown */}
             {categories.length > 0 && (
-              <div className="relative">
+              <div className="relative group">
                 <SlidersHorizontal
-                  size={11}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  style={{ color: 'var(--color-muted)' }}
+                  size={12}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#52525b] group-hover:text-white transition-colors"
                 />
                 <select
-                  className="input pl-7 pr-3 text-xs rounded-xl appearance-none cursor-pointer"
-                  style={{ minWidth: '160px', paddingTop: '8px', paddingBottom: '8px' }}
+                  className="bg-[#111111] border border-white/[0.06] hover:border-white/[0.12] rounded-[16px] pl-10 pr-10 py-2.5 text-xs text-foreground outline-none appearance-none cursor-pointer transition-all"
+                  style={{ minWidth: '180px' }}
                   value={category}
                   onChange={e => {
                     const val = e.target.value
@@ -189,37 +180,32 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
                   }}
                   aria-label="Filter by category"
                 >
-                  <option value="">All categories</option>
+                  <option value="">Toutes les catégories</option>
                   {categories.map(c => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+                <ChevronRight size={14} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none text-[#52525b]" />
               </div>
             )}
 
             {/* Complexity pills */}
             <div
-              className="flex items-center rounded-xl overflow-hidden"
-              style={{ border: '1px solid var(--color-border)' }}
+              className="flex items-center rounded-[16px] overflow-hidden border border-white/[0.06] bg-[#111111]"
               role="group"
               aria-label="Filter by complexity"
             >
-              {COMPLEXITY_OPTIONS.map(opt => (
+              {COMPLEXITY_OPTIONS.map((opt, i) => (
                 <button
                   key={opt.value}
                   onClick={() => {
                     setComplexity(opt.value)
                     applyFilters(opt.value, category, search)
                   }}
-                  className="btn-ghost text-xs px-3 py-2 rounded-none transition-all duration-150"
-                  style={{
-                    color: complexity === opt.value ? 'var(--color-foreground)' : undefined,
-                    background:
-                      complexity === opt.value
-                        ? 'rgba(99,102,241,0.15)'
-                        : undefined,
-                    borderRight: '1px solid var(--color-border)',
-                  }}
+                  className={`text-[11px] font-bold uppercase tracking-wider px-4 py-2.5 transition-all duration-200 ${complexity === opt.value
+                      ? 'bg-white text-black'
+                      : 'text-[#52525b] hover:text-white hover:bg-white/[0.03]'
+                    } ${i !== COMPLEXITY_OPTIONS.length - 1 ? 'border-r border-white/[0.06]' : ''}`}
                   aria-pressed={complexity === opt.value}
                 >
                   {opt.label}
@@ -261,8 +247,8 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
           className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm"
           style={{
             background: 'rgba(239,68,68,0.06)',
-            border:     '1px solid rgba(239,68,68,0.18)',
-            color:      '#EF4444',
+            border: '1px solid rgba(239,68,68,0.18)',
+            color: '#EF4444',
           }}
           role="alert"
         >
@@ -277,7 +263,7 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
           className="flex flex-col items-center justify-center py-16 gap-3 rounded-2xl"
           style={{
             background: 'rgba(255,255,255,0.015)',
-            border:     '1px solid rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.05)',
           }}
         >
           <div
@@ -286,9 +272,9 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
           >
             <Zap size={18} style={{ color: 'var(--color-brand)' }} />
           </div>
-          <p className="font-display text-sm font-semibold text-foreground">No workflows found</p>
+          <p className="font-display text-sm font-semibold text-foreground">Aucun workflow trouvé</p>
           <p className="text-xs text-muted text-center max-w-[240px]">
-            Try adjusting your search or filter — there are 4,000+ workflows available.
+            Essayez d&apos;ajuster votre recherche ou votre filtre — plus de 4 000 workflows sont disponibles.
           </p>
         </div>
       )}
@@ -314,11 +300,11 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
             className="btn-ghost gap-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Previous page"
           >
-            <ChevronLeft size={14} /> Previous
+            <ChevronLeft size={14} /> Précédent
           </button>
 
           <span className="font-mono text-xs text-muted">
-            Page {page} of {totalPages.toLocaleString()}
+            Page {page} sur {totalPages.toLocaleString()}
           </span>
 
           <button
@@ -327,7 +313,7 @@ export function WorkflowsSection({ agentSlug }: WorkflowsSectionProps) {
             className="btn-ghost gap-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Next page"
           >
-            Next <ChevronRight size={14} />
+            Suivant <ChevronRight size={14} />
           </button>
         </div>
       )}

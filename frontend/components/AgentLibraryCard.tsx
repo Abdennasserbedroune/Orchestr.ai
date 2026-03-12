@@ -11,9 +11,9 @@ interface AgentLibraryCardProps {
 
 function StatusBadge({ status }: { status: AgentFull['status'] }) {
   const styles: Record<AgentFull['status'], { label: string; color: string; bg: string; border: string }> = {
-    'active':       { label: 'Active',       color: '#22C55E', bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.3)'  },
-    'beta':         { label: 'Beta',         color: '#F59E0B', bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.3)' },
-    'coming-soon':  { label: 'Coming Soon',  color: '#4B5563', bg: 'rgba(75,85,99,0.1)',    border: 'rgba(75,85,99,0.3)'   },
+    'active': { label: 'Actif', color: '#22C55E', bg: 'rgba(34,197,94,0.1)', border: 'rgba(34,197,94,0.3)' },
+    'beta': { label: 'Bêta', color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
+    'coming-soon': { label: 'Bientôt', color: '#4B5563', bg: 'rgba(75,85,99,0.1)', border: 'rgba(75,85,99,0.3)' },
   }
   const s = styles[status]
   return (
@@ -75,7 +75,7 @@ export function AgentLibraryCard({ agent }: AgentLibraryCardProps) {
         </div>
         <span className="font-mono text-xs text-muted">{agent.rating}</span>
         <span className="text-subtle text-2xs">·</span>
-        <span className="font-mono text-2xs text-subtle">{agent.installs.toLocaleString()} installs</span>
+        <span className="font-mono text-2xs text-subtle">{agent.installs.toLocaleString()} installations</span>
       </div>
 
       {/* Tagline */}
@@ -88,7 +88,7 @@ export function AgentLibraryCard({ agent }: AgentLibraryCardProps) {
         <div className="flex items-center gap-1.5 mt-3">
           <Zap size={10} style={{ color: '#A78BFA' }} />
           <span className="font-mono text-2xs tracking-wider" style={{ color: '#A78BFA' }}>
-            n8n workflow included
+            Workflow n8n inclus
           </span>
         </div>
       )}
@@ -102,7 +102,7 @@ export function AgentLibraryCard({ agent }: AgentLibraryCardProps) {
             style={{ borderColor: 'rgba(239,68,68,0.3)', color: '#EF4444' }}
           >
             <Check size={13} />
-            Added
+            Ajouté
           </button>
         ) : (
           <button
@@ -110,14 +110,14 @@ export function AgentLibraryCard({ agent }: AgentLibraryCardProps) {
             className="btn-primary flex-1 justify-center text-xs py-2 px-3"
           >
             <Plus size={13} />
-            Add to Stack
+            Ajouter aux Agents
           </button>
         )}
         <Link
-          href={`/stack/${agent.slug}`}
+          href={`/agents/${agent.slug}`}
           className="btn-ghost text-xs py-2 px-3 rounded-full flex-shrink-0"
         >
-          View
+          Voir
         </Link>
       </div>
     </div>

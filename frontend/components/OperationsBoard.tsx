@@ -2,13 +2,13 @@ import { MOCK_TASKS, DOMAIN_META } from '@/lib/mock-data'
 import type { TaskStatus } from '@/lib/mock-data'
 
 const COLUMNS: { status: TaskStatus; label: string; dotClass: string; color: string }[] = [
-  { status: 'in-progress', label: 'In Progress', dotClass: 'running', color: '#F59E0B' },
-  { status: 'complete',    label: 'Complete',    dotClass: 'active',  color: '#22C55E' },
-  { status: 'error',       label: 'Error',       dotClass: 'error',   color: '#EF4444' },
+  { status: 'in-progress', label: 'En cours', dotClass: 'running', color: '#F59E0B' },
+  { status: 'complete', label: 'Terminé', dotClass: 'active', color: '#22C55E' },
+  { status: 'error', label: 'Erreur', dotClass: 'error', color: '#EF4444' },
 ]
 
 export function OperationsBoard() {
-  const total  = MOCK_TASKS.length
+  const total = MOCK_TASKS.length
   const active = MOCK_TASKS.filter(t => t.status === 'in-progress').length
   const errors = MOCK_TASKS.filter(t => t.status === 'error').length
 
@@ -18,15 +18,15 @@ export function OperationsBoard() {
       <div className="flex flex-wrap gap-2">
         <span className="chip">
           <span className="status-dot idle" />
-          {total} total tasks
+          {total} tâches au total
         </span>
         <span className="chip">
           <span className="status-dot running" />
-          {active} active
+          {active} actives
         </span>
         <span className="chip">
           <span className="status-dot error" />
-          {errors} errors
+          {errors} erreurs
         </span>
       </div>
 
@@ -54,7 +54,7 @@ export function OperationsBoard() {
               {/* Task items */}
               <div className="space-y-2">
                 {tasks.length === 0 && (
-                  <p className="text-2xs text-subtle font-mono py-1 px-1">No tasks</p>
+                  <p className="text-2xs text-subtle font-mono py-1 px-1">Aucune tâche</p>
                 )}
                 {tasks.map(task => {
                   const meta = DOMAIN_META[task.domain]

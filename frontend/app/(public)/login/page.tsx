@@ -2,17 +2,18 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Zap, ArrowRight, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
 
-  const [email,    setEmail   ] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [show,     setShow    ] = useState(false)
-  const [loading,  setLoading ] = useState(false)
-  const [error,    setError   ] = useState<string | null>(null)
+  const [show, setShow] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,58 +37,42 @@ export default function LoginPage() {
       headers: { Authorization: `Bearer ${session?.access_token}` },
     })
     const json = await res.json()
-    router.push(json.workspace ? '/command' : '/register?step=workspace')
+    router.push(json.workspace ? '/chat' : '/register?step=workspace')
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4 relative overflow-hidden font-sans">
 
-      {/* Background grid */}
-      <div className="absolute inset-0 bg-grid opacity-60 pointer-events-none" />
-
-      {/* Ambient glow */}
-      <div className="glow-blob w-[600px] h-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-30" />
+      {/* Very faint background glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/5 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Card */}
-      <div
-        className="relative w-full max-w-[400px] card p-8 animate-slide-up"
-        style={{ boxShadow: '0 0 60px -10px rgba(99,102,241,0.15)' }}
-      >
+      <div className="relative w-full max-w-[420px] rounded-[24px] border border-white/[0.08] bg-[#111111] p-10 animate-slide-up shadow-2xl">
 
         {/* Logo */}
-        <div className="flex items-center gap-2.5 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center flex-shrink-0"
-               style={{ background: 'linear-gradient(135deg, #5254CC, #6366F1)', boxShadow: '0 0 16px rgba(99,102,241,0.5)' }}>
-            <Zap size={14} className="text-white" strokeWidth={2.5} />
-          </div>
-          <span className="font-display font-semibold text-base text-foreground">Orchestrai</span>
+        <div className="flex flex-col items-center gap-3 mb-10">
+          <Image src="/logo.jpg" alt="Logo" width={48} height={48} className="rounded-xl object-contain shadow-lg" />
+          <h1 className="font-display text-[28px] font-semibold text-foreground tracking-tight">
+            Bon retour
+          </h1>
+          <p className="text-[15px] text-[#a1a1aa]">
+            Connectez-vous à votre espace
+          </p>
         </div>
-
-        {/* Heading */}
-        <h1 className="font-display text-2xl font-bold text-foreground leading-tight">
-          Welcome back
-        </h1>
-        <p className="text-sm text-muted mt-1.5 mb-8">
-          Sign in to your workspace.
-        </p>
 
         {/* Error */}
         {error && (
-          <div
-            className="flex items-center gap-3 rounded-xl px-4 py-3 mb-5 text-sm"
-            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#EF4444' }}
-            role="alert"
-          >
-            <AlertCircle size={14} className="flex-shrink-0" />
+          <div className="flex items-center gap-3 rounded-[12px] px-4 py-3 mb-6 text-[14px] bg-red-500/10 border border-red-500/20 text-red-400" role="alert">
+            <AlertCircle size={16} className="flex-shrink-0" />
             {error}
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="section-label" htmlFor="email">Email</label>
+          <div className="flex flex-col gap-2">
+            <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="email">Email</label>
             <input
               id="email"
               type="email"
@@ -95,21 +80,17 @@ export default function LoginPage() {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              className="input"
+              placeholder="vous@entreprise.com"
+              className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-3 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b]"
               disabled={loading}
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <label className="section-label" htmlFor="password">Password</label>
-              <button
-                type="button"
-                className="font-mono text-2xs text-muted hover:text-brand transition-colors"
-                tabIndex={-1}
-              >
-                Forgot password?
+              <label className="text-[13px] font-medium text-[#e4e4e7]" htmlFor="password">Mot de passe</label>
+              <button type="button" className="text-[13px] text-[#a1a1aa] hover:text-white transition-colors" tabIndex={-1}>
+                Oublié ?
               </button>
             </div>
             <div className="relative">
@@ -121,16 +102,15 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="input pr-10"
+                className="w-full bg-[#18181b] border border-white/5 rounded-[12px] px-4 py-3 text-[15px] text-foreground outline-none focus:border-white/20 transition-colors placeholder:text-[#52525b] pr-10"
                 disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShow(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-subtle hover:text-muted transition-colors"
-                aria-label={show ? 'Hide password' : 'Show password'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-[#a1a1aa] transition-colors"
               >
-                {show ? <EyeOff size={15} /> : <Eye size={15} />}
+                {show ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
@@ -138,27 +118,24 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !email || !password}
-            className="btn-primary w-full justify-center mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+            className="w-full flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-200 transition-colors rounded-[12px] py-3 text-[15px] font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center gap-2">
-                <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                Signing in…
+                <span className="w-4 h-4 rounded-full border-2 border-black/20 border-t-black animate-spin" />
+                Connexion…
               </span>
             ) : (
-              <span className="flex items-center gap-2">
-                Sign in
-                <ArrowRight size={14} />
-              </span>
+              <span>Se connecter</span>
             )}
           </button>
         </form>
 
         {/* Footer */}
-        <p className="text-xs text-muted text-center mt-6">
-          No account?{' '}
-          <Link href="/register" className="text-brand hover:underline font-medium">
-            Create workspace
+        <p className="text-[14px] text-[#a1a1aa] text-center mt-8">
+          Pas encore de compte ?{' '}
+          <Link href="/register" className="text-white hover:underline font-medium transition-colors">
+            S'inscrire
           </Link>
         </p>
 

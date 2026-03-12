@@ -1,103 +1,245 @@
 'use client'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Zap, LayoutDashboard, Layers,
-  Cpu, MessageSquare, Menu, X, ChevronRight,
+  MessageSquare, Layers, Cpu,
+  Menu, X, ChevronRight,
+  Zap, Settings, HelpCircle,
 } from 'lucide-react'
+import Image from 'next/image'
 
-const NAV = [
-  { href: '/command',    label: 'Command',    icon: LayoutDashboard, description: 'Mission control' },
-  { href: '/stack',      label: 'The Stack',  icon: Layers,          description: 'Agent library'   },
-  { href: '/operations', label: 'Operations', icon: Cpu,             description: 'Task board'       },
-  { href: '/brief',      label: 'Brief',      icon: MessageSquare,   description: 'AI consultant'    },
+// ── Navigation items ──────────────────────────────────────────
+const NAV_MAIN = [
+  {
+    href: '/chat',
+    label: 'Chat',
+    icon: MessageSquare,
+    description: 'Assistant IA',
+    accent: '#3B82F6',
+  },
+  {
+    href: '/agents',
+    label: 'Agents',
+    icon: Layers,
+    description: 'Bibliothèque',
+    accent: '#A855F7',
+  },
+  {
+    href: '/operations',
+    label: 'Opérations',
+    icon: Cpu,
+    description: 'Tâches en cours',
+    accent: '#10B981',
+  },
 ]
 
-// A route is active if pathname starts with the nav href
-// e.g. /stack/quill → highlights "The Stack"
+// ── Route matching ────────────────────────────────────────────
 function useActiveRoute(href: string) {
   const pathname = usePathname()
   return pathname === href || (href !== '/' && pathname.startsWith(href + '/'))
 }
 
+// ── NavItem ───────────────────────────────────────────────────
 function NavItem({
-  href, label, icon: Icon, description, onClick,
-}: (typeof NAV)[0] & { onClick?: () => void }) {
+  href, label, icon: Icon, description, accent, onClick,
+}: typeof NAV_MAIN[0] & { onClick?: () => void }) {
   const active = useActiveRoute(href)
+
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200"
+      className="group relative flex items-center gap-3 px-3 py-[11px] rounded-[14px] transition-all duration-200"
       style={active ? {
-        background: 'rgba(99,102,241,0.12)',
-        boxShadow: 'inset 0 0 0 1px rgba(99,102,241,0.25)',
+        background: `${accent}14`,
+        boxShadow: `inset 0 0 0 1px ${accent}28`,
       } : undefined}
     >
-      {/* Active left bar */}
+      {/* Active indicator bar */}
       {active && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full"
-          style={{ background: 'var(--color-brand)', boxShadow: '0 0 8px rgba(99,102,241,0.8)' }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[22px] rounded-r-full"
+          style={{ background: accent, boxShadow: `0 0 10px ${accent}90` }}
         />
       )}
 
-      {/* Icon node */}
+      {/* Icon */}
       <span
-        className="w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 transition-all duration-200"
+        className="w-[30px] h-[30px] flex items-center justify-center rounded-[10px] flex-shrink-0 transition-all duration-200"
         style={active ? {
-          background: 'rgba(99,102,241,0.2)',
-          border: '1px solid rgba(99,102,241,0.4)',
+          background: `${accent}20`,
+          border: `1px solid ${accent}35`,
         } : {
-          background: 'transparent',
-          border: '1px solid transparent',
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.05)',
         }}
       >
         <Icon
-          size={14}
+          size={15}
           strokeWidth={active ? 2.2 : 1.8}
-          style={{ color: active ? 'var(--color-brand)' : 'var(--color-muted)' }}
+          style={{ color: active ? accent : '#52525b' }}
         />
       </span>
 
-      {/* Label + description */}
-      <div className="flex-1 min-w-0">
-        <p
-          className="text-sm leading-none transition-colors"
+      {/* Label + sub-label */}
+      <div className="flex flex-col min-w-0">
+        <span
+          className="text-[14px] leading-none transition-colors"
           style={{
-            color: active ? 'var(--color-foreground)' : 'var(--color-muted)',
+            color: active ? '#fafafa' : '#a1a1aa',
             fontWeight: active ? 600 : 400,
           }}
         >
           {label}
-        </p>
-        <p
-          className="font-mono text-2xs mt-0.5 transition-colors"
-          style={{ color: active ? 'rgba(99,102,241,0.7)' : 'transparent' }}
+        </span>
+        <span
+          className="text-[10px] font-mono mt-[3px] uppercase tracking-widest transition-colors"
+          style={{ color: active ? `${accent}90` : 'transparent' }}
         >
           {description}
-        </p>
+        </span>
       </div>
 
-      {/* Trailing chevron on hover */}
+      {/* Hover chevron */}
       <ChevronRight
         size={12}
-        className="flex-shrink-0 transition-all duration-200 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
-        style={{ color: 'var(--color-brand)' }}
+        className="ml-auto flex-shrink-0 transition-all duration-200 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0"
+        style={{ color: active ? accent : '#52525b' }}
       />
     </Link>
   )
 }
 
-// ─── Desktop sidebar ──────────────────────────────────────────
+// ── Shared sidebar content ────────────────────────────────────
+function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+  return (
+    <div className="flex flex-col h-full">
+
+      {/* ── Logo / Brand ────────────────────────────────────── */}
+      <Link
+        href="/"
+        className="flex items-center gap-3 px-5 py-4 flex-shrink-0 hover:bg-white/[0.03] transition-colors"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <div className="relative flex-shrink-0">
+          <Image
+            src="/logo.jpg"
+            alt="Orchestrai"
+            width={30}
+            height={30}
+            className="rounded-[9px] object-contain"
+          />
+          {/* Live pulse dot */}
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-[2px] border-[#0E0E0E] bg-emerald-400" />
+        </div>
+
+        <div className="flex flex-col min-w-0">
+          <span className="font-display font-semibold text-[15px] text-[#fafafa] tracking-tight leading-none">
+            Orchestrai
+          </span>
+          <span className="text-[10px] font-mono text-[#3f3f46] mt-0.5">
+            v1.0 · Bêta
+          </span>
+        </div>
+      </Link>
+
+      {/* ── Main nav ────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col px-3 pt-5 pb-3 overflow-y-auto gap-1">
+
+        <p className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-[#3f3f46] px-3 mb-2">
+          Navigation
+        </p>
+
+        {NAV_MAIN.map(item => (
+          <NavItem key={item.href} {...item} onClick={onNavClick} />
+        ))}
+
+        {/* ── Separator ─────────────────────────────────────── */}
+        <div
+          className="my-4 mx-3"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+        />
+
+        {/* ── Secondary links ───────────────────────────────── */}
+        <p className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-[#3f3f46] px-3 mb-2">
+          Système
+        </p>
+
+        <Link
+          href="#"
+          className="flex items-center gap-3 px-3 py-[10px] rounded-[14px] text-[#52525b] hover:text-[#a1a1aa] hover:bg-white/[0.03] transition-all duration-200"
+        >
+          <span className="w-[30px] h-[30px] flex items-center justify-center rounded-[10px] bg-white/[0.02] border border-white/[0.05] flex-shrink-0">
+            <Settings size={14} strokeWidth={1.7} />
+          </span>
+          <span className="text-[14px]">Paramètres</span>
+        </Link>
+
+        <Link
+          href="#"
+          className="flex items-center gap-3 px-3 py-[10px] rounded-[14px] text-[#52525b] hover:text-[#a1a1aa] hover:bg-white/[0.03] transition-all duration-200"
+        >
+          <span className="w-[30px] h-[30px] flex items-center justify-center rounded-[10px] bg-white/[0.02] border border-white/[0.05] flex-shrink-0">
+            <HelpCircle size={14} strokeWidth={1.7} />
+          </span>
+          <span className="text-[14px]">Aide</span>
+        </Link>
+
+      </div>
+
+      {/* ── Workspace footer ─────────────────────────────────── */}
+      <div
+        className="px-4 py-4 flex-shrink-0"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}
+      >
+        <div className="flex items-center gap-3 px-3 py-3 rounded-[14px] bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.04] transition-all cursor-pointer group">
+
+          {/* Avatar */}
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 uppercase"
+            style={{
+              background: 'linear-gradient(135deg, rgba(29,78,216,0.4), rgba(168,85,247,0.4))',
+              border: '1px solid rgba(29,78,216,0.4)',
+              color: '#a5b4fc',
+            }}
+          >
+            W
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-medium text-[#e4e4e7] leading-none truncate">
+              Espace de travail
+            </p>
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              <p className="text-[10px] font-mono text-[#52525b] truncate">
+                Plan gratuit
+              </p>
+            </div>
+          </div>
+
+          {/* Upgrade hint */}
+          <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Zap size={12} className="text-[#3f3f46]" />
+          </div>
+        </div>
+      </div>
+
+    </div>
+  )
+}
+
+// ── Desktop sidebar ───────────────────────────────────────────
 function DesktopSidebar() {
   return (
     <aside
       className="hidden md:flex w-[220px] flex-shrink-0 h-screen flex-col"
       style={{
-        background: 'var(--color-surface)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        background: '#0A0A0A',
+        borderRight: '1px solid rgba(255,255,255,0.05)',
       }}
     >
       <SidebarContent />
@@ -105,9 +247,8 @@ function DesktopSidebar() {
   )
 }
 
-// ─── Mobile drawer ────────────────────────────────────────────
+// ── Mobile drawer ─────────────────────────────────────────────
 function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  // Lock body scroll when drawer is open
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -120,8 +261,8 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
         onClick={onClose}
         className="fixed inset-0 z-40 md:hidden transition-all duration-300"
         style={{
-          background: 'rgba(3,3,7,0.8)',
-          backdropFilter: 'blur(4px)',
+          background: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(6px)',
           opacity: open ? 1 : 0,
           pointerEvents: open ? 'auto' : 'none',
         }}
@@ -130,27 +271,26 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
 
       {/* Drawer panel */}
       <div
-        className="fixed top-0 left-0 h-full z-50 flex flex-col md:hidden"
+        className="fixed top-0 left-0 h-full z-50 md:hidden"
         style={{
           width: '260px',
-          background: 'var(--color-surface)',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: '#0A0A0A',
+          borderRight: '1px solid rgba(255,255,255,0.05)',
           transform: open ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
-          boxShadow: open ? '20px 0 60px rgba(0,0,0,0.6)' : 'none',
+          boxShadow: open ? '24px 0 80px rgba(0,0,0,0.7)' : 'none',
         }}
         role="dialog"
         aria-modal="true"
-        aria-label="Navigation menu"
+        aria-label="Menu de navigation"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--color-muted)' }}
-          aria-label="Close menu"
+          className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-[8px] border border-white/[0.07] text-[#52525b] hover:text-white hover:bg-white/[0.05] transition-all"
+          aria-label="Fermer le menu"
         >
-          <X size={14} />
+          <X size={13} />
         </button>
 
         <SidebarContent onNavClick={onClose} />
@@ -159,135 +299,38 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
   )
 }
 
-// ─── Mobile top bar (hamburger) ───────────────────────────────
+// ── Mobile top bar ────────────────────────────────────────────
 function MobileTopBar({ onOpen }: { onOpen: () => void }) {
   return (
     <div
       className="md:hidden flex items-center justify-between px-4 h-14 flex-shrink-0 sticky top-0 z-30"
       style={{
-        background: 'rgba(13,13,20,0.85)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'rgba(10,10,10,0.92)',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
       }}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-2">
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{
-            background: 'linear-gradient(135deg, #5254CC, #6366F1)',
-            boxShadow: '0 0 12px rgba(99,102,241,0.45)',
-          }}
-        >
-          <Zap size={13} className="text-white" strokeWidth={2.5} />
-        </div>
-        <span className="font-display font-semibold text-sm text-foreground">Orchestrai</span>
-      </div>
+      <Link href="/" className="flex items-center gap-2.5">
+        <Image src="/logo.jpg" alt="Orchestrai" width={26} height={26} className="rounded-[8px] object-contain" />
+        <span className="font-display font-semibold text-[14px] text-[#fafafa]">Orchestrai</span>
+      </Link>
 
-      {/* Hamburger */}
       <button
         onClick={onOpen}
-        className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
-        style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--color-muted)' }}
-        aria-label="Open navigation menu"
+        className="w-8 h-8 flex items-center justify-center rounded-[10px] border border-white/[0.07] text-[#52525b] hover:text-white hover:bg-white/[0.05] transition-all"
+        aria-label="Ouvrir le menu"
         aria-haspopup="true"
       >
-        <Menu size={16} />
+        <Menu size={15} />
       </button>
     </div>
   )
 }
 
-// ─── Shared sidebar content ───────────────────────────────────
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
-  return (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div
-        className="flex items-center gap-2.5 px-5 h-14 flex-shrink-0"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{
-            background: 'linear-gradient(135deg, #5254CC, #6366F1)',
-            boxShadow: '0 0 12px rgba(99,102,241,0.45)',
-          }}
-        >
-          <Zap size={13} className="text-white" strokeWidth={2.5} />
-        </div>
-        <span className="font-display font-semibold text-sm text-foreground">Orchestrai</span>
-
-        {/* Live indicator */}
-        <div className="ml-auto flex items-center gap-1.5">
-          <span className="relative flex h-1.5 w-1.5">
-            <span
-              className="animate-ping-soft absolute inline-flex h-full w-full rounded-full"
-              style={{ background: 'var(--color-status-active)', opacity: 0.6 }}
-            />
-            <span
-              className="relative inline-flex h-1.5 w-1.5 rounded-full"
-              style={{ background: 'var(--color-status-active)' }}
-            />
-          </span>
-        </div>
-      </div>
-
-      {/* Nav section label */}
-      <div className="px-5 pt-5 pb-2">
-        <p className="section-label">Navigation</p>
-      </div>
-
-      {/* Nav links */}
-      <nav className="flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto" aria-label="Main navigation">
-        {NAV.map(item => (
-          <NavItem key={item.href} {...item} onClick={onNavClick} />
-        ))}
-      </nav>
-
-      {/* Divider */}
-      <div className="mx-5 mb-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }} />
-
-      {/* Workspace footer */}
-      <div className="px-4 pb-5 flex-shrink-0">
-        <div
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
-          style={{
-            background: 'rgba(99,102,241,0.06)',
-            border: '1px solid rgba(99,102,241,0.12)',
-          }}
-        >
-          {/* Avatar */}
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(167,139,250,0.3))',
-              border: '1px solid rgba(99,102,241,0.3)',
-              color: '#A78BFA',
-            }}
-          >
-            W
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">Workspace</p>
-            <p className="font-mono text-2xs truncate" style={{ color: 'var(--color-subtle)' }}>
-              Free plan
-            </p>
-          </div>
-          {/* Status dot */}
-          <span className="status-dot active flex-shrink-0" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Composed export ──────────────────────────────────────────
+// ── Composed export ───────────────────────────────────────────
 export function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
-
-  // Close drawer on route change
   const pathname = usePathname()
   useEffect(() => { setDrawerOpen(false) }, [pathname])
 

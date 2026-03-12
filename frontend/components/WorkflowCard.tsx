@@ -13,27 +13,27 @@ const COMPLEXITY_STYLE: Record<
   { color: string; border: string; bg: string; label: string }
 > = {
   low: {
-    color: '#22C55E',
-    border: 'rgba(34,197,94,0.3)',
-    bg:    'rgba(34,197,94,0.08)',
-    label: 'Low',
+    color: '#10B981',
+    border: 'rgba(16,185,129,0.2)',
+    bg: 'rgba(16,185,129,0.08)',
+    label: 'Faible',
   },
   medium: {
     color: '#F59E0B',
-    border: 'rgba(245,158,11,0.3)',
-    bg:    'rgba(245,158,11,0.08)',
-    label: 'Medium',
+    border: 'rgba(245,158,11,0.2)',
+    bg: 'rgba(245,158,11,0.08)',
+    label: 'Moyenne',
   },
   high: {
     color: '#EF4444',
-    border: 'rgba(239,68,68,0.3)',
-    bg:    'rgba(239,68,68,0.08)',
-    label: 'High',
+    border: 'rgba(239,68,68,0.2)',
+    bg: 'rgba(239,68,68,0.08)',
+    label: 'Élevée',
   },
 }
 
 export function WorkflowCard({ workflow }: WorkflowCardProps) {
-  const [copied,      setCopied     ] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
   const complexity = COMPLEXITY_STYLE[workflow.complexity] ?? COMPLEXITY_STYLE.low
@@ -45,9 +45,9 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
       const res = await fetch(workflow.raw_url)
       if (!res.ok) throw new Error('Download failed')
       const blob = await res.blob()
-      const url  = URL.createObjectURL(blob)
-      const a    = document.createElement('a')
-      a.href     = url
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
       a.download = workflow.filename || `${workflow.id}.json`
       a.click()
       URL.revokeObjectURL(url)
@@ -100,9 +100,9 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
         <span
           className="chip text-2xs flex-shrink-0 self-start"
           style={{
-            color:       complexity.color,
+            color: complexity.color,
             borderColor: complexity.border,
-            background:  complexity.bg,
+            background: complexity.bg,
           }}
         >
           {complexity.label}
@@ -124,9 +124,9 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
               key={integration}
               className="chip text-2xs"
               style={{
-                background:  'rgba(99,102,241,0.07)',
+                background: 'rgba(99,102,241,0.07)',
                 borderColor: 'rgba(99,102,241,0.2)',
-                color:       'var(--color-brand)',
+                color: 'var(--color-brand)',
               }}
             >
               {integration}
@@ -143,9 +143,9 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
       {/* ── Meta row: node count + trigger ── */}
       <div className="flex items-center gap-3">
         {workflow.node_count > 0 && (
-          <span className="flex items-center gap-1 font-mono text-2xs text-muted">
+          <span className="flex items-center gap-1 font-mono text-[10px] text-[#52525b]">
             <Hexagon size={10} className="flex-shrink-0" strokeWidth={1.5} />
-            {workflow.node_count} nodes
+            {workflow.node_count} nœuds
           </span>
         )}
         {workflow.trigger_type && workflow.trigger_type !== 'Manual' && (
@@ -157,27 +157,27 @@ export function WorkflowCard({ workflow }: WorkflowCardProps) {
 
       {/* ── Actions ── */}
       <div
-        className="flex items-center gap-2 pt-3"
-        style={{ borderTop: '1px solid var(--color-border)' }}
+        className="flex items-center gap-2 pt-3 border-t border-white/[0.04]"
       >
         <button
           onClick={handleDownload}
           disabled={downloading}
-          className="btn-ghost text-xs gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label={`Download ${workflow.name} JSON`}
+          className="btn-ghost text-[11px] font-bold uppercase tracking-wider py-1.5 px-3 rounded-full gap-1.5 disabled:opacity-50"
+          aria-label={`Télécharger ${workflow.name} JSON`}
         >
           <Download size={12} />
-          {downloading ? 'Downloading…' : 'Download JSON'}
+          {downloading ? 'Téléchargement…' : 'JSON'}
         </button>
 
         <button
           onClick={handleCopyUrl}
-          className="btn-ghost text-xs gap-1.5 ml-auto"
-          aria-label={`Copy import URL for ${workflow.name}`}
+          className="btn-ghost text-[11px] font-bold uppercase tracking-wider py-1.5 px-3 rounded-full gap-1.5 ml-auto text-brand"
+          style={{ background: 'rgba(29,78,216,0.08)', border: '1px solid rgba(29,78,216,0.2)' }}
+          aria-label={`Copier l'URL d'importation pour ${workflow.name}`}
         >
           {copied
-            ? <><Check size={12} style={{ color: 'var(--color-status-active)' }} /> Copied</>
-            : <><Copy size={12} /> Copy URL</>
+            ? <><Check size={12} className="text-green-400" /> Copié</>
+            : <><Copy size={12} /> URL</>
           }
         </button>
       </div>

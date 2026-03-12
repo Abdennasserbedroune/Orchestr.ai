@@ -15,7 +15,7 @@ export function AgentCard({ agent }: AgentCardProps) {
   const slug = AGENTS_CATALOG.find(a => a.name === agent.name)?.slug ?? agent.id
 
   return (
-    <Link href={`/stack/${slug}`} className="card-hover p-5 group relative overflow-hidden block">
+    <Link href={`/agents/${slug}`} className="card-hover p-5 group relative overflow-hidden block">
       {/* Domain-colored inset border glow on hover */}
       <div
         className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
@@ -54,10 +54,10 @@ export function AgentCard({ agent }: AgentCardProps) {
           <span className="text-gradient font-mono text-2xl font-medium leading-none">
             {agent.tasksCompleted}
           </span>
-          <p className="text-2xs text-subtle font-mono uppercase tracking-widest mt-1">tasks done</p>
+          <p className="text-2xs text-subtle font-mono uppercase tracking-widest mt-1">tâches terminées</p>
         </div>
         <div className="text-right">
-          <p className="text-2xs text-subtle font-mono">last active</p>
+          <p className="text-2xs text-subtle font-mono">dernière activité</p>
           <p className="text-2xs text-muted font-mono mt-0.5">{agent.lastActive}</p>
         </div>
       </div>

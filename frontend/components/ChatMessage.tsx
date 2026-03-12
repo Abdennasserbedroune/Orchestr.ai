@@ -51,9 +51,9 @@ function AgentMentionCard({ slug }: { slug: string }) {
 }
 
 export function ChatMessageBubble({ message }: { message: Message }) {
-  const isUser      = message.role === 'user'
+  const isUser = message.role === 'user'
   const isStreaming = message.streaming && !isUser
-  const mentions    = !isUser ? detectAgentMentions(message.content) : []
+  const mentions = !isUser ? detectAgentMentions(message.content) : []
 
   return (
     <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end`}>

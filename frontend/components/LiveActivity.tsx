@@ -4,8 +4,8 @@ export function LiveActivity() {
   return (
     <div className="card overflow-hidden">
       {MOCK_ACTIVITY.map((item, i) => {
-        const meta  = DOMAIN_META[item.domain]
-        const Icon  = meta.icon
+        const meta = DOMAIN_META[item.domain]
+        const Icon = meta.icon
         const isLast = i === MOCK_ACTIVITY.length - 1
 
         return (

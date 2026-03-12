@@ -11,12 +11,12 @@ interface AgentTerminalProps {
 const CURSOR = '\u2588'
 
 export function AgentTerminal({ agentName, domain }: AgentTerminalProps) {
-  const [input,     setInput    ] = useState('')
-  const [output,    setOutput   ] = useState('')
+  const [input, setInput] = useState('')
+  const [output, setOutput] = useState('')
   const [streaming, setStreaming] = useState(false)
-  const [done,      setDone     ] = useState(false)
+  const [done, setDone] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const outputRef   = useRef<HTMLDivElement>(null)
+  const outputRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll output as text streams in
   useEffect(() => {
@@ -101,7 +101,7 @@ export function AgentTerminal({ agentName, domain }: AgentTerminalProps) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`Ask ${agentName} something...`}
+          placeholder={`Demander quelque chose à ${agentName}...`}
           className="flex-1 bg-transparent font-mono text-sm text-foreground outline-none placeholder:text-subtle"
           aria-label={`Terminal input for ${agentName}`}
           disabled={streaming}
@@ -112,7 +112,7 @@ export function AgentTerminal({ agentName, domain }: AgentTerminalProps) {
           className="btn-primary text-xs py-1.5 px-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           aria-label="Run demo"
         >
-          {streaming ? 'Running…' : 'Run →'}
+          {streaming ? 'Exécution…' : 'Lancer →'}
         </button>
       </div>
 
@@ -126,8 +126,8 @@ export function AgentTerminal({ agentName, domain }: AgentTerminalProps) {
       >
         {!output && !streaming && (
           <p className="text-subtle text-xs">
-            Press <span className="text-brand">Run</span> or hit{' '}
-            <span className="text-brand">Enter</span> to see {agentName} in action.
+            Appuyez sur <span className="text-brand">Lancer</span> ou tapez sur{' '}
+            <span className="text-brand">Entrée</span> pour voir {agentName} en action.
           </p>
         )}
         {output && (
