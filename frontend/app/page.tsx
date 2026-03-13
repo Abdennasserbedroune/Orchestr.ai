@@ -21,10 +21,10 @@ const MODES = [
 
 function getGreeting(): string {
   const h = new Date().getHours()
-  if (h >= 5 && h < 12) return 'Orchestrez vos agents. Automatisez l’avenir.'
-  if (h >= 12 && h < 18) return 'Vos agents travaillent. Vous dirigez.'
-  if (h >= 18 && h < 22) return 'L’orchestration ne dort jamais.'
-  return 'Pendant que vous dormez, vos agents agissent.'
+  if (h >= 5 && h < 12) return `Orchestrez vos agents. Automatisez l'avenir.`
+  if (h >= 12 && h < 18) return `Vos agents travaillent. Vous dirigez.`
+  if (h >= 18 && h < 22) return `L'orchestration ne dort jamais.`
+  return `Pendant que vous dormez, vos agents agissent.`
 }
 
 export default function Home() {
@@ -110,7 +110,7 @@ export default function Home() {
             {!done && <span className="inline-block w-[3px] h-[0.85em] bg-white ml-1 align-middle animate-pulse" />}
           </h1>
           <p className="text-[#71717a] text-[15px] font-normal">
-            Décrivez votre workflow. Vos agents s’en chargent.
+            {`Décrivez votre workflow. Vos agents s'en chargent.`}
           </p>
         </div>
 
@@ -200,7 +200,7 @@ export default function Home() {
           </div>
 
           <p className="text-center text-[11px] text-[#2a2a2a] mt-3 font-mono">
-            Orchestrai peut commettre des erreurs. Vérifiez les informations importantes.
+            {`Orchestrai peut commettre des erreurs. Vérifiez les informations importantes.`}
           </p>
         </div>
       </main>
@@ -224,7 +224,7 @@ export default function Home() {
                 Lancez vos agents
               </h2>
               <p className="text-[14px] text-[#71717a] text-center leading-relaxed">
-                Connectez-vous ou créez un compte pour orchestrer vos workflows et lancer vos agents IA.
+                {`Connectez-vous ou créez un compte pour orchestrer vos workflows et lancer vos agents IA.`}
               </p>
             </div>
 
@@ -245,7 +245,7 @@ export default function Home() {
                 href="/register"
                 className="w-full flex items-center justify-center gap-2 bg-[#18181b] border border-white/[0.08] text-foreground hover:bg-[#222] transition-colors rounded-[12px] py-3 text-[15px] font-medium"
               >
-                Créer un compte
+                {`Créer un compte`}
               </Link>
             </div>
 
