@@ -1,5 +1,4 @@
 'use client'
-// Clean two-sided chat: left = OrchestrAI avatar + text, right = plain text only
 import Image from 'next/image'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { AGENTS_CATALOG } from '@/lib/agents-data'
@@ -13,6 +12,7 @@ export type Message = {
   streaming?: boolean
 }
 
+// ── Typing animation ──────────────────────────────────────────────────
 function useTypingAnimation(content: string, streaming?: boolean) {
   const [displayed, setDisplayed] = useState('')
   const [animating, setAnimating] = useState(false)
@@ -33,6 +33,7 @@ function useTypingAnimation(content: string, streaming?: boolean) {
   return { displayed, animating }
 }
 
+// ── Agent mention card ──────────────────────────────────────────────
 function detectAgentMentions(content: string) {
   return AGENTS_CATALOG.filter(a => content.toLowerCase().includes(a.name.toLowerCase()))
 }
@@ -44,21 +45,29 @@ function AgentMentionCard({ slug }: { slug: string }) {
   const Icon = meta.icon
   return (
     <a href={`/stack/${agent.slug}`}
-      className="flex items-center gap-3 mt-3 rounded-xl px-4 py-3 transition-all duration-200 hover:-translate-y-0.5"
-      style={{ background: meta.bg, border: `1px solid ${meta.color}40`, boxShadow: `0 0 16px ${meta.color}15`, textDecoration: 'none' }}>
-      <div className="flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0"
-        style={{ background: `${meta.color}20`, border: `1px solid ${meta.color}50` }}>
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12, marginTop: 10,
+        borderRadius: 14, padding: '10px 14px',
+        background: meta.bg, border: `1px solid ${meta.color}40`,
+        boxShadow: `0 0 16px ${meta.color}15`,
+        textDecoration: 'none', transition: 'transform 0.18s ease',
+      }}
+      onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)'}
+      onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(0)'}
+    >
+      <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `${meta.color}20`, border: `1px solid ${meta.color}50`, flexShrink: 0 }}>
         <Icon size={14} style={{ color: meta.color }} />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate" style={{ color: '#e4e4e7' }}>{agent.name}</p>
-        <p className="font-mono text-[10px] mt-0.5 truncate" style={{ color: '#52525b' }}>{agent.role}</p>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{agent.name}</p>
+        <p style={{ fontFamily: 'monospace', fontSize: 10, color: '#52525b', margin: 0 }}>{agent.role}</p>
       </div>
-      <span className="font-mono text-[10px] flex-shrink-0" style={{ color: meta.color }}>View →</span>
+      <span style={{ fontFamily: 'monospace', fontSize: 10, color: meta.color, flexShrink: 0 }}>Voir →</span>
     </a>
   )
 }
 
+// ── Markdown-like content parser ──────────────────────────────────────
 function parseContent(content: string): Array<{ type: 'text' | 'code'; value: string; lang?: string }> {
   const parts: Array<{ type: 'text' | 'code'; value: string; lang?: string }> = []
   const regex = /```(\w*)\n?([\s\S]*?)```/g
@@ -72,6 +81,7 @@ function parseContent(content: string): Array<{ type: 'text' | 'code'; value: st
   return parts
 }
 
+// ── Code block ─────────────────────────────────────────────────────────
 function CodeBlock({ code, lang }: { code: string; lang: string }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = useCallback(() => {
@@ -83,80 +93,101 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
       ['bash','sh'].includes(lang) ? 'sh' : 'txt'
     const blob = new Blob([code], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = `orchestrai-output.${ext}`; a.click()
+    const a = document.createElement('a'); a.href = url; a.download = `orchestrai-output.${ext}`; a.click()
     URL.revokeObjectURL(url)
   }, [code, lang])
   return (
-    <div className="relative my-3 rounded-xl overflow-hidden" style={{ background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111111' }}>
-        <span className="font-mono text-xs uppercase tracking-wider" style={{ color: '#52525b' }}>{lang || 'code'}</span>
-        <div className="flex items-center gap-2">
-          <button onClick={handleDownload} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono hover:bg-white/[0.06] transition-all" style={{ color: '#71717a' }}>
-            <Download size={12} strokeWidth={2} /><span>Download</span>
+    <div style={{ position: 'relative', margin: '12px 0', borderRadius: 14, overflow: 'hidden', background: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111' }}>
+        <span style={{ fontFamily: 'monospace', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#52525b' }}>{lang || 'code'}</span>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={handleDownload}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#71717a', fontSize: 12, fontFamily: 'monospace', cursor: 'pointer', transition: 'color 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = '#71717a'}
+          >
+            <Download size={12} strokeWidth={2} /><span>Télécharger</span>
           </button>
-          <button onClick={handleCopy} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono transition-all"
-            style={{ color: copied ? '#4ade80' : '#71717a', background: copied ? 'rgba(74,222,128,0.08)' : 'transparent' }}>
+          <button onClick={handleCopy}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 8, border: 'none', background: copied ? 'rgba(74,222,128,0.08)' : 'transparent', color: copied ? '#4ade80' : '#71717a', fontSize: 12, fontFamily: 'monospace', cursor: 'pointer', transition: 'all 0.15s' }}
+          >
             {copied ? <Check size={12} strokeWidth={2.5} /> : <Copy size={12} strokeWidth={2} />}
-            <span>{copied ? 'Copied!' : 'Copy'}</span>
+            <span>{copied ? 'Copié !' : 'Copier'}</span>
           </button>
         </div>
       </div>
-      <pre className="overflow-x-auto px-4 py-4 text-[13px] leading-relaxed font-mono" style={{ color: '#e4e4e7', margin: 0, whiteSpace: 'pre' }}>
+      <pre style={{ overflowX: 'auto', padding: '14px 16px', fontSize: 13, lineHeight: 1.65, fontFamily: 'monospace', color: '#e4e4e7', margin: 0, whiteSpace: 'pre' }}>
         <code>{code.trimEnd()}</code>
       </pre>
     </div>
   )
 }
 
-// ── Big animated avatar (56px, double orbit while writing) ──────
+// ── Logo avatar with orbit animation while streaming ───────────────────
 function OrchestrAIAvatar({ animating }: { animating: boolean }) {
   return (
-    <div className="flex-shrink-0" style={{ marginTop: 2 }}>
-      <div className="relative" style={{ width: 56, height: 56 }}>
-        {animating && (
-          <span style={{ position:'absolute', inset:-4, borderRadius:'50%', border:'2px dashed rgba(99,102,241,0.6)', animation:'spin 1.6s linear infinite' }} />
-        )}
-        {animating && (
-          <span style={{ position:'absolute', inset:-9, borderRadius:'50%', border:'1.5px dashed rgba(99,102,241,0.22)', animation:'spin 3.5s linear infinite reverse' }} />
-        )}
-        <div style={{ width:56, height:56, borderRadius:'50%', overflow:'hidden', position:'relative', background:'linear-gradient(135deg,#1e1e2e,#12121a)',
-          boxShadow: animating ? '0 0 0 2.5px rgba(99,102,241,0.7),0 0 32px rgba(99,102,241,0.5)' : '0 0 0 2px rgba(99,102,241,0.3),0 0 16px rgba(99,102,241,0.15)',
-          transition:'box-shadow 0.4s ease' }}>
-          {animating && <span className="absolute inset-0 rounded-full" style={{ background:'rgba(99,102,241,0.15)', animation:'pulse 1.2s ease-in-out infinite' }} />}
-          <Image src="/logo.jpg" alt="OrchestrAI" width={56} height={56} className="relative z-10"
-            style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'50%',
-              filter: animating ? 'brightness(1.2)' : 'brightness(1)', transition:'filter 0.4s ease' }} />
-        </div>
+    <div style={{ flexShrink: 0, position: 'relative', width: 40, height: 40, marginTop: 2 }}>
+      {animating && (
+        <span style={{ position: 'absolute', inset: -4, borderRadius: '50%', border: '2px dashed rgba(99,102,241,0.55)', animation: 'spin 1.8s linear infinite' }} />
+      )}
+      <div style={{
+        width: 40, height: 40, borderRadius: '50%', overflow: 'hidden',
+        boxShadow: animating
+          ? '0 0 0 2px rgba(99,102,241,0.7), 0 0 24px rgba(99,102,241,0.45)'
+          : '0 0 0 1.5px rgba(99,102,241,0.25)',
+        transition: 'box-shadow 0.4s ease',
+      }}>
+        <Image src="/logo.jpg" alt="OrchestrAI" width={40} height={40}
+          style={{ width: '100%', height: '100%', objectFit: 'cover',
+            filter: animating ? 'brightness(1.15)' : 'brightness(1)',
+            transition: 'filter 0.4s ease',
+          }} />
       </div>
     </div>
   )
 }
 
+// ── Main export ───────────────────────────────────────────────────────
 export function ChatMessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
   const { displayed, animating } = useTypingAnimation(message.content, message.streaming)
   const mentions = !isUser ? detectAgentMentions(message.content) : []
   const parts = parseContent(isUser ? message.content : displayed)
 
-  // ── USER: right-aligned plain text, no labels, no bubble ────────
+  // ── USER message — right-aligned, clearly readable
   if (isUser) {
     return (
-      <div className="flex w-full justify-end">
-        <p className="text-sm leading-relaxed text-right"
-          style={{ color: '#a1a1aa', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '72%' }}>
-          {message.content}
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        <div style={{
+          maxWidth: '72%',
+          background: '#1a1a2e',
+          border: '1px solid rgba(99,102,241,0.2)',
+          borderRadius: '18px 18px 4px 18px',
+          padding: '10px 16px',
+        }}>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.65, color: '#e4e4e7', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+            {message.content}
+          </p>
+        </div>
       </div>
     )
   }
 
-  // ── ASSISTANT: left-aligned with animated avatar ─────────────
+  // ── ASSISTANT message — logo + text on SAME baseline grid
   return (
-    <div className="flex w-full justify-start gap-4">
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, width: '100%' }}>
       <OrchestrAIAvatar animating={animating} />
-      <div className="flex flex-col gap-1.5 items-start" style={{ maxWidth: 'calc(100% - 72px)' }}>
-        <div className="text-sm leading-relaxed" style={{ color: 'var(--color-foreground)' }}>
+
+      {/* Content column — left-aligned to avatar */}
+      <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+
+        {/* Name label */}
+        <p style={{ margin: '0 0 6px 0', fontSize: 12, fontWeight: 600, color: '#6366f1', fontFamily: 'monospace', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          OrchestrAI
+        </p>
+
+        {/* Message text */}
+        <div style={{ fontSize: 15, lineHeight: 1.75, color: '#d4d4d8' }}>
           {parts.map((part, idx) =>
             part.type === 'code' ? (
               <CodeBlock key={idx} code={part.value} lang={part.lang || 'text'} />
@@ -165,12 +196,13 @@ export function ChatMessageBubble({ message }: { message: Message }) {
             )
           )}
           {animating && (
-            <span className="inline-block ml-0.5 align-middle" aria-hidden="true"
-              style={{ width:2, height:15, background:'var(--color-brand,#6366f1)', borderRadius:1, animation:'blink 0.9s step-end infinite' }} />
+            <span style={{ display: 'inline-block', marginLeft: 2, verticalAlign: 'middle', width: 2, height: 15, background: '#6366f1', borderRadius: 1, animation: 'blink 0.9s step-end infinite' }} aria-hidden />
           )}
         </div>
+
+        {/* Agent mention cards */}
         {!animating && mentions.length > 0 && (
-          <div className="w-full flex flex-col gap-1.5 mt-1">
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {mentions.map(agent => <AgentMentionCard key={agent.slug} slug={agent.slug} />)}
           </div>
         )}
