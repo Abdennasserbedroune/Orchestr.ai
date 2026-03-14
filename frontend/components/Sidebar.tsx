@@ -6,14 +6,14 @@ import { usePathname } from 'next/navigation'
 import {
   MessageSquare, Layers, Cpu,
   Menu, X, ChevronRight,
-  Zap, Settings,
+  Sparkles, Settings,
 } from 'lucide-react'
 import Image from 'next/image'
 
 const NAV_MAIN = [
-  { href: '/chat',       label: 'Chat',       icon: MessageSquare, description: 'Assistant IA',    accent: '#3B82F6' },
-  { href: '/agents',     label: 'Agents',     icon: Layers,        description: 'Bibliothèque',     accent: '#A855F7' },
-  { href: '/operations', label: 'Opérations', icon: Cpu,           description: 'Tâches en cours', accent: '#10B981' },
+  { href: '/chat',       label: 'Chat',       icon: MessageSquare, description: 'Assistant IA',    accent: '#6366f1' },
+  { href: '/agents',     label: 'Agents',     icon: Layers,        description: 'Bibliothèque',     accent: '#a78bfa' },
+  { href: '/operations', label: 'Opérations', icon: Cpu,           description: 'Tâches en cours', accent: '#22d3ee' },
 ]
 
 function useActiveRoute(href: string) {
@@ -56,7 +56,6 @@ function NavItem({ href, label, icon: Icon, description, accent, onClick }: type
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   return (
     <div className="flex flex-col h-full">
-
       <Link href="/" className="flex items-center gap-3 px-5 py-4 flex-shrink-0 hover:bg-white/[0.03] transition-colors"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="relative flex-shrink-0">
@@ -70,12 +69,12 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       </Link>
 
       <div className="flex-1 flex flex-col px-3 pt-5 pb-3 overflow-y-auto gap-1">
-        <p className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-[#3f3f46] px-3 mb-2">Navigation</p>
+        <p className="section-label px-3 mb-2">Navigation</p>
         {NAV_MAIN.map(item => <NavItem key={item.href} {...item} onClick={onNavClick} />)}
 
         <div className="my-4 mx-3" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }} />
 
-        <p className="text-[10px] font-mono font-bold uppercase tracking-[0.15em] text-[#3f3f46] px-3 mb-2">Compte</p>
+        <p className="section-label px-3 mb-2">Compte</p>
         <Link href="/settings" onClick={onNavClick}
           className="flex items-center gap-3 px-3 py-[10px] rounded-[14px] transition-all duration-200 hover:bg-white/[0.03]"
           style={{ color: useActiveRoute('/settings') ? '#fafafa' : '#52525b' }}>
@@ -89,22 +88,21 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       <div className="px-4 py-4 flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
         <div className="flex items-center gap-3 px-3 py-3 rounded-[14px] bg-white/[0.025] border border-white/[0.05] hover:bg-white/[0.04] transition-all cursor-pointer group">
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0 uppercase"
-            style={{ background: 'linear-gradient(135deg, rgba(29,78,216,0.4), rgba(168,85,247,0.4))', border: '1px solid rgba(29,78,216,0.4)', color: '#a5b4fc' }}>
+            style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.4), rgba(167,139,250,0.4))', border: '1px solid rgba(99,102,241,0.4)', color: '#a5b4fc' }}>
             W
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-[#e4e4e7] leading-none truncate">Espace de travail</p>
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+              <span className="status-dot active" />
               <p className="text-[10px] font-mono text-[#52525b] truncate">Plan gratuit</p>
             </div>
           </div>
           <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Zap size={12} className="text-[#3f3f46]" />
+            <Sparkles size={12} className="text-[#a78bfa]" />
           </div>
         </div>
       </div>
-
     </div>
   )
 }
