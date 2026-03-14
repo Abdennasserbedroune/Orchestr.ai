@@ -1,113 +1,61 @@
 'use client'
-import Image from 'next/image'
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { AGENTS_CATALOG } from '@/lib/agents-data'
-import { DOMAIN_META } from '@/lib/mock-data'
-import { Copy, Check, Download } from 'lucide-react'
 
-export type Message = {
+import { useState, useCallback } from 'react'
+import Image from 'next/image'
+import { Copy, Check, Download, Loader2 } from 'lucide-react'
+
+// ── Types ────────────────────────────────────────────────────
+interface Agent {
+  name: string
+  role: string
+  avatar?: string
+  color?: string
+}
+
+export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   streaming?: boolean
+  agent?: Agent
+  timestamp?: Date
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STREAMING DISPLAY
-// ─────────────────────────────────────────────────────────────────────────────
-function useDisplayContent(content: string, streaming?: boolean) {
-  // While streaming: display everything as it arrives (no extra word-by-word delay)
-  // After done: show full text immediately
-  const [animating, setAnimating] = useState(!!streaming)
-  const prev = useRef('')
-
-  useEffect(() => {
-    if (streaming) { setAnimating(true); prev.current = content; return }
-    setAnimating(false)
-    prev.current = content
-  }, [content, streaming])
-
-  return { displayed: content, animating: !!streaming }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AGENT MENTION CARD
-// ─────────────────────────────────────────────────────────────────────────────
-function detectAgentMentions(content: string) {
-  return AGENTS_CATALOG.filter(a =>
-    content.toLowerCase().includes(a.name.toLowerCase())
-  )
-}
-
-function AgentCard({ slug }: { slug: string }) {
-  const agent = AGENTS_CATALOG.find(a => a.slug === slug)
-  if (!agent) return null
-  const meta = DOMAIN_META[agent.domain]
-  const Icon = meta.icon
-  return (
-    <a
-      href={`/stack/${agent.slug}`}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        marginTop: 8, borderRadius: 14,
-        padding: '11px 14px',
-        background: meta.bg,
-        border: `1px solid ${meta.color}35`,
-        textDecoration: 'none',
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
-      }}
-      onMouseEnter={e => {
-        const el = e.currentTarget as HTMLAnchorElement
-        el.style.transform = 'translateY(-2px)'
-        el.style.boxShadow = `0 6px 24px ${meta.color}20`
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget as HTMLAnchorElement
-        el.style.transform = 'translateY(0)'
-        el.style.boxShadow = 'none'
-      }}
-    >
-      <div style={{
-        width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: `${meta.color}18`, border: `1px solid ${meta.color}40`,
-      }}>
-        <Icon size={15} style={{ color: meta.color }} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: '#e4e4e7' }}>{agent.name}</p>
-        <p style={{ margin: 0, fontSize: 11.5, color: '#52525b', fontFamily: 'monospace' }}>{agent.role}</p>
-      </div>
-      <span style={{ fontFamily: 'monospace', fontSize: 11.5, color: meta.color, flexShrink: 0 }}>
-        Voir →
-      </span>
-    </a>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MARKDOWN-LITE RENDERER  (handles **bold**, *italic*, headings, bullets, code)
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Inline renderer ──────────────────────────────────────────
 function renderInline(text: string): React.ReactNode[] {
-  // split on **bold** and *italic* patterns
+  const re = /(`[^`]+`|\*\*[^*]+\*\*)/g
   const parts: React.ReactNode[] = []
-  const re = /(\*\*(.+?)\*\*|\*(.+?)\*)/g
-  let last = 0, m: RegExpExecArray | null
+  let last = 0
+  let m: RegExpExecArray | null
+  let key = 0
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index))
-    if (m[2]) parts.push(<strong key={m.index} style={{ color: '#f4f4f5', fontWeight: 600 }}>{m[2]}</strong>)
-    else if (m[3]) parts.push(<em key={m.index} style={{ color: '#a1a1aa', fontStyle: 'italic' }}>{m[3]}</em>)
+    const raw = m[0]
+    if (raw.startsWith('`')) {
+      parts.push(
+        <code key={key++} style={{
+          fontFamily: 'var(--font-mono)', fontSize: '0.82em',
+          background: 'rgba(99,102,241,0.12)', color: '#a5b4fc',
+          padding: '1px 6px', borderRadius: 5,
+          border: '1px solid rgba(99,102,241,0.2)',
+        }}>{raw.slice(1, -1)}</code>
+      )
+    } else {
+      parts.push(<strong key={key++} style={{ color: '#e4e4e7', fontWeight: 600 }}>{raw.slice(2, -2)}</strong>)
+    }
     last = re.lastIndex
   }
   if (last < text.length) parts.push(text.slice(last))
   return parts
 }
 
+// ── Block types ───────────────────────────────────────────────
 type Block =
-  | { kind: 'text';    lines: string[] }
-  | { kind: 'code';    lang: string; code: string }
-  | { kind: 'heading'; level: number; text: string }
-  | { kind: 'bullet';  items: string[] }
+  | { kind: 'text';     lines: string[] }
+  | { kind: 'code';     lang: string; code: string }
+  | { kind: 'heading';  level: number; text: string }
+  | { kind: 'bullet';   items: string[] }
+  | { kind: 'numbered'; items: string[] }
 
 function parseBlocks(content: string): Block[] {
   const blocks: Block[] = []
@@ -117,21 +65,16 @@ function parseBlocks(content: string): Block[] {
   while (i < rawLines.length) {
     const line = rawLines[i]
 
-    // fenced code block
     if (line.startsWith('```')) {
       const lang = line.slice(3).trim()
       const codeLines: string[] = []
       i++
-      while (i < rawLines.length && !rawLines[i].startsWith('```')) {
-        codeLines.push(rawLines[i])
-        i++
-      }
-      i++ // skip closing ```
+      while (i < rawLines.length && !rawLines[i].startsWith('```')) { codeLines.push(rawLines[i]); i++ }
+      i++
       blocks.push({ kind: 'code', lang, code: codeLines.join('\n') })
       continue
     }
 
-    // heading
     const headingMatch = line.match(/^(#{1,3})\s+(.+)/)
     if (headingMatch) {
       blocks.push({ kind: 'heading', level: headingMatch[1].length, text: headingMatch[2] })
@@ -139,41 +82,44 @@ function parseBlocks(content: string): Block[] {
       continue
     }
 
-    // bullet list
-    if (line.match(/^[-*•]\s+/)) {
+    if (line.match(/^\d+\.\s+/)) {
       const items: string[] = []
-      while (i < rawLines.length && rawLines[i].match(/^[-*•]\s+/)) {
-        items.push(rawLines[i].replace(/^[-*•]\s+/, ''))
+      while (i < rawLines.length && rawLines[i].match(/^\d+\.\s+/)) {
+        items.push(rawLines[i].replace(/^\d+\.\s+/, ''))
+        i++
+      }
+      blocks.push({ kind: 'numbered', items })
+      continue
+    }
+
+    if (line.match(/^[-*\u2022]\s+/)) {
+      const items: string[] = []
+      while (i < rawLines.length && rawLines[i].match(/^[-*\u2022]\s+/)) {
+        items.push(rawLines[i].replace(/^[-*\u2022]\s+/, ''))
         i++
       }
       blocks.push({ kind: 'bullet', items })
       continue
     }
 
-    // plain text — group consecutive non-special lines
     const lines: string[] = []
     while (
       i < rawLines.length &&
       !rawLines[i].startsWith('```') &&
       !rawLines[i].match(/^#{1,3}\s+/) &&
-      !rawLines[i].match(/^[-*•]\s+/)
-    ) {
-      lines.push(rawLines[i])
-      i++
-    }
-    if (lines.some(l => l.trim())) {
-      blocks.push({ kind: 'text', lines })
-    }
+      !rawLines[i].match(/^[-*\u2022]\s+/) &&
+      !rawLines[i].match(/^\d+\.\s+/)
+    ) { lines.push(rawLines[i]); i++ }
+    if (lines.some(l => l.trim())) blocks.push({ kind: 'text', lines })
   }
 
   return blocks
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CODE BLOCK COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Code block ────────────────────────────────────────────────
 function CodeBlock({ code, lang }: { code: string; lang: string }) {
   const [copied, setCopied] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   const copy = useCallback(() => {
     navigator.clipboard.writeText(code).then(() => {
@@ -183,54 +129,62 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
   }, [code])
 
   const download = useCallback(() => {
+    setDownloading(true)
     const exts: Record<string, string> = {
-      json: 'json', javascript: 'js', js: 'js',
-      typescript: 'ts', ts: 'ts', python: 'py',
-      py: 'py', bash: 'sh', sh: 'sh',
+      js: 'js', ts: 'ts', tsx: 'tsx', jsx: 'jsx', py: 'py', python: 'py',
+      sh: 'sh', bash: 'sh', css: 'css', html: 'html', json: 'json', md: 'md',
     }
-    const ext = exts[lang] ?? 'txt'
+    const ext = exts[lang.toLowerCase()] ?? 'txt'
+    const blob = new Blob([code], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' }))
-    a.download = `orchestrai.${ext}`
-    a.click()
+    a.href = url; a.download = `code.${ext}`; a.click()
+    URL.revokeObjectURL(url)
+    setTimeout(() => setDownloading(false), 1000)
   }, [code, lang])
 
   return (
     <div style={{
-      margin: '16px 0', borderRadius: 14, overflow: 'hidden',
-      background: '#0c0c10', border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: 12, overflow: 'hidden',
+      border: '1px solid rgba(99,102,241,0.18)',
+      background: '#0d0d10', margin: '8px 0',
     }}>
-      {/* header bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 14px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: '#111116',
+        padding: '6px 12px',
+        background: 'rgba(99,102,241,0.07)',
+        borderBottom: '1px solid rgba(99,102,241,0.12)',
       }}>
-        <span style={{
-          fontFamily: 'monospace', fontSize: 11,
-          textTransform: 'uppercase', letterSpacing: '0.08em', color: '#52525b',
-        }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#6366f1', fontWeight: 600 }}>
           {lang || 'code'}
         </span>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <IconBtn onClick={download}>
-            <Download size={12} strokeWidth={2} />
-            <span>Télécharger</span>
-          </IconBtn>
-          <IconBtn onClick={copy} green={copied}>
-            {copied ? <Check size={12} strokeWidth={2.5} /> : <Copy size={12} strokeWidth={2} />}
-            <span>{copied ? 'Copié !' : 'Copier'}</span>
-          </IconBtn>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={copy} style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '3px 8px', borderRadius: 6,
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+            color: copied ? '#22c55e' : '#6e6e7a', fontSize: 11, cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}>
+            {copied ? <Check size={11} /> : <Copy size={11} />}
+            {copied ? 'Copié' : 'Copier'}
+          </button>
+          <button onClick={download} style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '3px 8px', borderRadius: 6,
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
+            color: '#6e6e7a', fontSize: 11, cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}>
+            {downloading ? <Loader2 size={11} className="animate-spin" /> : <Download size={11} />}
+          </button>
         </div>
       </div>
-      {/* code */}
       <pre style={{
-        overflowX: 'auto', margin: 0,
-        padding: '16px 18px',
-        fontSize: 13.5, lineHeight: 1.7,
-        fontFamily: '"Fira Code","Cascadia Code",monospace',
-        color: '#c9d1d9', whiteSpace: 'pre',
+        margin: 0, padding: '14px 16px',
+        overflowX: 'auto', fontSize: 13,
+        fontFamily: 'var(--font-mono)',
+        color: '#e4e4e7', lineHeight: 1.65,
       }}>
         <code>{code.trimEnd()}</code>
       </pre>
@@ -238,182 +192,125 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
   )
 }
 
-function IconBtn({
-  children, onClick, green,
-}: { children: React.ReactNode; onClick: () => void; green?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 5,
-        padding: '4px 9px', borderRadius: 7, border: 'none',
-        background: green ? 'rgba(74,222,128,0.08)' : 'transparent',
-        color: green ? '#4ade80' : '#71717a',
-        fontSize: 11.5, fontFamily: 'monospace', cursor: 'pointer',
-        transition: 'color 0.15s',
-      }}
-      onMouseEnter={e =>
-        (e.currentTarget as HTMLButtonElement).style.color = green ? '#86efac' : '#a1a1aa'
-      }
-      onMouseLeave={e =>
-        (e.currentTarget as HTMLButtonElement).style.color = green ? '#4ade80' : '#71717a'
-      }
-    >
-      {children}
-    </button>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AVATAR
-// ─────────────────────────────────────────────────────────────────────────────
-function Avatar({ animating }: { animating: boolean }) {
-  return (
-    <div style={{ flexShrink: 0, position: 'relative', width: 38, height: 38, marginTop: 2 }}>
-      {animating && (
-        <span style={{
-          position: 'absolute', inset: -5, borderRadius: '50%',
-          border: '1.5px dashed rgba(99,102,241,0.45)',
-          animation: 'oSpin 2s linear infinite',
-        }} />
-      )}
-      <div style={{
-        width: 38, height: 38, borderRadius: '50%', overflow: 'hidden',
-        boxShadow: animating
-          ? '0 0 0 1.5px rgba(99,102,241,0.6), 0 0 20px rgba(99,102,241,0.35)'
-          : '0 0 0 1px rgba(99,102,241,0.2)',
-        transition: 'box-shadow 0.4s ease',
+// ── Block renderer ────────────────────────────────────────────
+function RenderBlock({ block }: { block: Block }) {
+  if (block.kind === 'code') {
+    return <CodeBlock code={block.code} lang={block.lang} />
+  }
+  if (block.kind === 'heading') {
+    const sizes: Record<number, string> = { 1: '18px', 2: '16px', 3: '14px' }
+    return (
+      <p style={{
+        fontSize: sizes[block.level] ?? '14px',
+        fontWeight: 700, color: '#ededf0',
+        margin: '10px 0 4px',
+        fontFamily: 'var(--font-display)',
       }}>
-        <Image src="/logo.jpg" alt="OrchestrAI" width={38} height={38}
-          style={{
-            width: '100%', height: '100%', objectFit: 'cover',
-            filter: animating ? 'brightness(1.08)' : 'brightness(0.95)',
-            transition: 'filter 0.4s ease',
-          }}
-        />
-      </div>
-    </div>
+        {renderInline(block.text)}
+      </p>
+    )
+  }
+  if (block.kind === 'bullet') {
+    return (
+      <ul style={{ margin: '4px 0', paddingLeft: 18, listStyleType: 'disc' }}>
+        {block.items.map((item, i) => (
+          <li key={i} style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, padding: '1px 0' }}>
+            {renderInline(item)}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+  if (block.kind === 'numbered') {
+    return (
+      <ol style={{ margin: '4px 0', paddingLeft: 18 }}>
+        {block.items.map((item, i) => (
+          <li key={i} style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, padding: '1px 0' }}>
+            {renderInline(item)}
+          </li>
+        ))}
+      </ol>
+    )
+  }
+  // text block
+  const text = block.lines.join(' ').trim()
+  if (!text) return null
+  return (
+    <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.75, margin: '3px 0' }}>
+      {renderInline(text)}
+    </p>
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN EXPORT
-// ─────────────────────────────────────────────────────────────────────────────
-export function ChatMessageBubble({ message }: { message: Message }) {
+// ── Main export ───────────────────────────────────────────────
+export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === 'user'
-  const { displayed, animating } = useDisplayContent(message.content, message.streaming)
-  const mentions = !isUser ? detectAgentMentions(message.content) : []
 
-  // ── USER MESSAGE ──────────────────────────────────────────────────
   if (isUser) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px 0' }}>
         <div style={{
-          maxWidth: '74%',
-          background: 'linear-gradient(145deg,#1c1a3e,#181830)',
-          border: '1px solid rgba(99,102,241,0.18)',
-          borderRadius: '20px 20px 4px 20px',
-          padding: '13px 18px',
-          boxShadow: '0 2px 16px rgba(0,0,0,0.4)',
+          maxWidth: '72%',
+          background: 'rgba(99,102,241,0.13)',
+          border: '1px solid rgba(99,102,241,0.22)',
+          borderRadius: '18px 18px 4px 18px',
+          padding: '10px 16px',
+          fontSize: 14, color: '#ededf0', lineHeight: 1.65,
         }}>
-          <p style={{
-            margin: 0, fontSize: 15.5, lineHeight: 1.7,
-            color: '#e8e8f0', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
-          }}>
-            {message.content}
-          </p>
+          {message.content}
         </div>
       </div>
     )
   }
 
-  // ── ASSISTANT MESSAGE ─────────────────────────────────────────────
-  const blocks = parseBlocks(displayed)
+  const agent = message.agent ?? { name: 'OrchestrAI', role: 'Assistant', color: '#6366f1' }
+  const blocks = parseBlocks(message.content)
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, width: '100%' }}>
-      <Avatar animating={animating} />
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* name label */}
-        <p style={{
-          margin: '0 0 8px',
-          fontSize: 11.5, fontWeight: 700, color: '#6366f1',
-          fontFamily: 'monospace', letterSpacing: '0.08em', textTransform: 'uppercase',
-        }}>
-          OrchestrAI
-        </p>
-
-        {/* rendered blocks */}
-        <div style={{ fontSize: 15.5, lineHeight: 1.8, color: '#c8c8d4' }}>
-          {blocks.map((block, bi) => {
-            if (block.kind === 'code') {
-              return <CodeBlock key={bi} code={block.code} lang={block.lang} />
-            }
-            if (block.kind === 'heading') {
-              const sizes: Record<number, string> = { 1: '18px', 2: '16px', 3: '15px' }
-              return (
-                <p key={bi} style={{
-                  margin: '16px 0 6px',
-                  fontSize: sizes[block.level] || '16px',
-                  fontWeight: 700, color: '#e8e8f0',
-                  letterSpacing: '-0.01em', lineHeight: 1.3,
-                }}>
-                  {renderInline(block.text)}
-                </p>
-              )
-            }
-            if (block.kind === 'bullet') {
-              return (
-                <ul key={bi} style={{
-                  margin: '8px 0', paddingLeft: 20,
-                  display: 'flex', flexDirection: 'column', gap: 4,
-                }}>
-                  {block.items.map((item, ii) => (
-                    <li key={ii} style={{ fontSize: 15.5, lineHeight: 1.7, color: '#c8c8d4' }}>
-                      {renderInline(item)}
-                    </li>
-                  ))}
-                </ul>
-              )
-            }
-            // plain text block
-            return (
-              <div key={bi} style={{ marginBottom: 4 }}>
-                {block.lines.map((line, li) =>
-                  line.trim() === '' ? (
-                    <br key={li} />
-                  ) : (
-                    <span key={li} style={{ display: 'block', lineHeight: 1.8 }}>
-                      {renderInline(line)}
-                    </span>
-                  )
-                )}
-              </div>
-            )
-          })}
-
-          {/* blinking cursor while streaming */}
-          {animating && (
-            <span style={{
-              display: 'inline-block', marginLeft: 2,
-              verticalAlign: 'middle',
-              width: 2, height: 16,
-              background: '#6366f1', borderRadius: 1,
-              animation: 'oBlink 0.85s step-end infinite',
-            }} aria-hidden />
-          )}
-        </div>
-
-        {/* agent cards */}
-        {!animating && mentions.length > 0 && (
-          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {mentions.map(a => <AgentCard key={a.slug} slug={a.slug} />)}
+    <div style={{ display: 'flex', gap: 12, padding: '6px 0', alignItems: 'flex-start' }}>
+      {/* Avatar */}
+      <div style={{ flexShrink: 0 }}>
+        {agent.avatar ? (
+          <Image src={agent.avatar} alt={agent.name} width={32} height={32}
+            style={{ borderRadius: 10, objectFit: 'cover' }} />
+        ) : (
+          <div style={{
+            width: 32, height: 32, borderRadius: 10,
+            background: `linear-gradient(135deg, ${agent.color ?? '#6366f1'}33, ${agent.color ?? '#6366f1'}1a)`,
+            border: `1px solid ${agent.color ?? '#6366f1'}40`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 700, color: agent.color ?? '#818cf8',
+          }}>
+            {agent.name.charAt(0).toUpperCase()}
           </div>
         )}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{agent.name}</span>
+          <span style={{
+            fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 500,
+            color: agent.color ?? '#6366f1',
+            background: `${agent.color ?? '#6366f1'}18`,
+            border: `1px solid ${agent.color ?? '#6366f1'}28`,
+            padding: '1px 6px', borderRadius: 99,
+            textTransform: 'uppercase', letterSpacing: '0.08em',
+          }}>{agent.role}</span>
+        </div>
+
+        {/* Blocks */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {blocks.map((block, i) => <RenderBlock key={i} block={block} />)}
+          {message.streaming && (
+            <span className="stream-cursor" aria-hidden="true" />
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-export default ChatMessageBubble
+export default ChatMessage
