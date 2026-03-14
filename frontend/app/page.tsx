@@ -19,9 +19,9 @@ const MODES = [
 ]
 
 const SLOGANS = [
-  { from: 5,  to: 12, text: 'Orchestrez vos agents. Automatisez l’avenir.' },
+  { from: 5,  to: 12, text: "Orchestrez vos agents. Automatisez l'avenir." },
   { from: 12, to: 18, text: 'Vos agents travaillent. Vous dirigez.' },
-  { from: 18, to: 22, text: 'L’orchestration ne dort jamais.' },
+  { from: 18, to: 22, text: "L'orchestration ne dort jamais." },
   { from: 22, to: 5,  text: 'Pendant que vous dormez, vos agents agissent.' },
 ]
 
@@ -118,7 +118,7 @@ export default function Home() {
             )}
           </h1>
           <p className="text-[14px] sm:text-[15px] font-normal" style={{ color: 'var(--color-muted)' }}>
-            Décrivez votre workflow. Vos agents s’en chargent.
+            {"Décrivez votre workflow. Vos agents s'en chargent."}
           </p>
         </div>
 
@@ -274,7 +274,7 @@ export default function Home() {
                 Lancez vos agents
               </h2>
               <p className="text-[14px] text-center leading-relaxed" style={{ color: 'var(--color-muted)' }}>
-                Connectez-vous pour orchestrer vos workflows et lancer vos agents IA.
+                {"Connectez-vous pour orchestrer vos workflows et lancer vos agents IA."}
               </p>
             </div>
 
@@ -298,7 +298,7 @@ export default function Home() {
                 style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-foreground)' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-panel)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'var(--color-surface)')}>
-                Créer un compte
+                {"Créer un compte"}
               </Link>
             </div>
 
