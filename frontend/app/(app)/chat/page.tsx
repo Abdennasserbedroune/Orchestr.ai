@@ -38,9 +38,9 @@ function createId() { return Math.random().toString(36).slice(2, 10) }
 
 function getGreeting(): string {
   const h = new Date().getHours()
-  if (h >= 5 && h < 12)  return 'Orchestrez vos agents. Automatisez l\u2019avenir.'
+  if (h >= 5 && h < 12)  return 'Orchestrez vos agents. Automatisez l’avenir.'
   if (h >= 12 && h < 18) return 'Vos agents travaillent. Vous dirigez.'
-  if (h >= 18 && h < 22) return 'L\u2019orchestration ne dort jamais.'
+  if (h >= 18 && h < 22) return 'L’orchestration ne dort jamais.'
   return 'Pendant que vous dormez, vos agents agissent.'
 }
 
@@ -225,10 +225,17 @@ export default function ChatPage() {
     const full = getGreeting()
     setGreeting('')
     setGreetingDone(false)
+    // Use Array.from to correctly iterate over Unicode characters
+    const chars = Array.from(full)
     let i = 0
     const t = setInterval(() => {
-      if (i < full.length) { setGreeting(c => c + full.charAt(i)); i++ }
-      else { clearInterval(t); setGreetingDone(true) }
+      if (i < chars.length) {
+        setGreeting(c => c + chars[i])
+        i++
+      } else {
+        clearInterval(t)
+        setGreetingDone(true)
+      }
     }, 32)
     return () => clearInterval(t)
   }, [messages.length])
