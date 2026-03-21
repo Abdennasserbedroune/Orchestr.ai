@@ -4,9 +4,30 @@ import { Paperclip, ArrowUp, Mic, Plug, X, Square } from 'lucide-react'
 import { ChatMessageBubble } from '@/components/ChatMessage'
 import type { Message } from '@/components/ChatMessage'
 import Image from 'next/image'
-import Github from '@lobehub/icons/es/Github'
-import Notion from '@lobehub/icons/es/Notion'
-import N8n from '@lobehub/icons/es/N8n'
+
+// ── Inline SVG brand icons (no external dep) ──────────────────────────────────
+function GitHubIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+    </svg>
+  )
+}
+function NotionIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.139c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.Seven.326.841.513.841 1.494v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.54-1.632z"/>
+    </svg>
+  )
+}
+function N8nIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 60 60" fill="none">
+      <rect width="60" height="60" rx="12" fill="#ea4b71"/>
+      <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="22" fontWeight="700" fontFamily="monospace">n8n</text>
+    </svg>
+  )
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
@@ -22,9 +43,9 @@ const CATEGORIES = [
 ]
 
 const MCP_TOOLS = [
-  { id: 'github',      name: 'GitHub',       desc: 'Code & repos',          color: '#e4e4e7', dot: '#c9d1d9', icon: Github },
-  { id: 'notion',      name: 'Notion',       desc: 'Pages & bases',         color: '#e4e4e7', dot: '#ffffff', icon: Notion },
-  { id: 'n8n',         name: 'n8n',          desc: 'Workflows',             color: '#ea4b71', dot: '#ea4b71', icon: N8n },
+  { id: 'github', name: 'GitHub', desc: 'Code & repos', color: '#e4e4e7', dot: '#c9d1d9', Icon: GitHubIcon },
+  { id: 'notion', name: 'Notion', desc: 'Pages & bases', color: '#e4e4e7', dot: '#ffffff', Icon: NotionIcon },
+  { id: 'n8n',    name: 'n8n',    desc: 'Workflows',     color: '#ea4b71', dot: '#ea4b71', Icon: N8nIcon },
 ]
 
 const INITIALS: Record<string, string> = {
@@ -168,13 +189,7 @@ function ToolsDrawer({ onClose }: { onClose: () => void }) {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
                 }}>
-                  {tool.icon ? (
-                    <tool.icon size={22} style={{ color: tool.dot }} />
-                  ) : (
-                    <span style={{ fontSize: 13, fontWeight: 700, color: tool.dot, fontFamily: 'monospace', letterSpacing: '-0.02em' }}>
-                      {INITIALS[tool.id]}
-                    </span>
-                  )}
+                  <div style={{ color: tool.dot, display: 'flex' }}><tool.Icon size={22} /></div>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#fafafa', lineHeight: 1.2 }}>{tool.name}</p>
