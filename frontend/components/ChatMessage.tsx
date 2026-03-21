@@ -12,12 +12,7 @@ export type Message = {
   streaming?: boolean
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STREAMING DISPLAY
-// ─────────────────────────────────────────────────────────────────────────────
 function useDisplayContent(content: string, streaming?: boolean) {
-  // While streaming: display everything as it arrives (no extra word-by-word delay)
-  // After done: show full text immediately
   const [animating, setAnimating] = useState(!!streaming)
   const prev = useRef('')
 
@@ -30,9 +25,6 @@ function useDisplayContent(content: string, streaming?: boolean) {
   return { displayed: content, animating: !!streaming }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AGENT MENTION CARD
-// ─────────────────────────────────────────────────────────────────────────────
 function detectAgentMentions(content: string) {
   return AGENTS_CATALOG.filter(a =>
     content.toLowerCase().includes(a.name.toLowerCase())
@@ -85,11 +77,7 @@ function AgentCard({ slug }: { slug: string }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MARKDOWN-LITE RENDERER  (handles **bold**, *italic*, headings, bullets, code)
-// ─────────────────────────────────────────────────────────────────────────────
 function renderInline(text: string): React.ReactNode[] {
-  // split on **bold** and *italic* patterns
   const parts: React.ReactNode[] = []
   const re = /(\*\*(.+?)\*\*|\*(.+?)\*)/g
   let last = 0, m: RegExpExecArray | null
@@ -117,7 +105,6 @@ function parseBlocks(content: string): Block[] {
   while (i < rawLines.length) {
     const line = rawLines[i]
 
-    // fenced code block
     if (line.startsWith('```')) {
       const lang = line.slice(3).trim()
       const codeLines: string[] = []
@@ -126,12 +113,11 @@ function parseBlocks(content: string): Block[] {
         codeLines.push(rawLines[i])
         i++
       }
-      i++ // skip closing ```
+      i++
       blocks.push({ kind: 'code', lang, code: codeLines.join('\n') })
       continue
     }
 
-    // heading
     const headingMatch = line.match(/^(#{1,3})\s+(.+)/)
     if (headingMatch) {
       blocks.push({ kind: 'heading', level: headingMatch[1].length, text: headingMatch[2] })
@@ -139,7 +125,6 @@ function parseBlocks(content: string): Block[] {
       continue
     }
 
-    // bullet list
     if (line.match(/^[-*•]\s+/)) {
       const items: string[] = []
       while (i < rawLines.length && rawLines[i].match(/^[-*•]\s+/)) {
@@ -150,7 +135,6 @@ function parseBlocks(content: string): Block[] {
       continue
     }
 
-    // plain text — group consecutive non-special lines
     const lines: string[] = []
     while (
       i < rawLines.length &&
@@ -169,9 +153,6 @@ function parseBlocks(content: string): Block[] {
   return blocks
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CODE BLOCK COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
 function CodeBlock({ code, lang }: { code: string; lang: string }) {
   const [copied, setCopied] = useState(false)
 
@@ -200,7 +181,6 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
       margin: '16px 0', borderRadius: 14, overflow: 'hidden',
       background: '#0c0c10', border: '1px solid rgba(255,255,255,0.08)',
     }}>
-      {/* header bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '8px 14px',
@@ -224,7 +204,6 @@ function CodeBlock({ code, lang }: { code: string; lang: string }) {
           </IconBtn>
         </div>
       </div>
-      {/* code */}
       <pre style={{
         overflowX: 'auto', margin: 0,
         padding: '16px 18px',
@@ -264,9 +243,6 @@ function IconBtn({
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AVATAR
-// ─────────────────────────────────────────────────────────────────────────────
 function Avatar({ animating }: { animating: boolean }) {
   return (
     <div style={{ flexShrink: 0, position: 'relative', width: 38, height: 38, marginTop: 2 }}>
@@ -296,15 +272,11 @@ function Avatar({ animating }: { animating: boolean }) {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN EXPORT
-// ─────────────────────────────────────────────────────────────────────────────
 export function ChatMessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
   const { displayed, animating } = useDisplayContent(message.content, message.streaming)
   const mentions = !isUser ? detectAgentMentions(message.content) : []
 
-  // ── USER MESSAGE ──────────────────────────────────────────────────
   if (isUser) {
     return (
       <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
@@ -327,7 +299,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
     )
   }
 
-  // ── ASSISTANT MESSAGE ─────────────────────────────────────────────
   const blocks = parseBlocks(displayed)
 
   return (
@@ -335,7 +306,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
       <Avatar animating={animating} />
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* name label */}
         <p style={{
           margin: '0 0 8px',
           fontSize: 11.5, fontWeight: 700, color: '#6366f1',
@@ -344,7 +314,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
           OrchestrAI
         </p>
 
-        {/* rendered blocks */}
         <div style={{ fontSize: 15.5, lineHeight: 1.8, color: '#c8c8d4' }}>
           {blocks.map((block, bi) => {
             if (block.kind === 'code') {
@@ -377,7 +346,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
                 </ul>
               )
             }
-            // plain text block
             return (
               <div key={bi} style={{ marginBottom: 4 }}>
                 {block.lines.map((line, li) =>
@@ -393,7 +361,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
             )
           })}
 
-          {/* blinking cursor while streaming */}
           {animating && (
             <span style={{
               display: 'inline-block', marginLeft: 2,
@@ -405,7 +372,6 @@ export function ChatMessageBubble({ message }: { message: Message }) {
           )}
         </div>
 
-        {/* agent cards */}
         {!animating && mentions.length > 0 && (
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {mentions.map(a => <AgentCard key={a.slug} slug={a.slug} />)}
