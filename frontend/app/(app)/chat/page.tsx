@@ -4,6 +4,9 @@ import { Paperclip, ArrowUp, Mic, Plug, X, Square } from 'lucide-react'
 import { ChatMessageBubble } from '@/components/ChatMessage'
 import type { Message } from '@/components/ChatMessage'
 import Image from 'next/image'
+import Github from '@lobehub/icons/es/Github'
+import Notion from '@lobehub/icons/es/Notion'
+import N8n from '@lobehub/icons/es/N8n'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DATA
@@ -19,19 +22,13 @@ const CATEGORIES = [
 ]
 
 const MCP_TOOLS = [
-  { id: 'github',      name: 'GitHub',       desc: 'Code & repos',          color: '#e4e4e7', dot: '#c9d1d9' },
-  { id: 'notion',      name: 'Notion',       desc: 'Pages & bases',          color: '#e4e4e7', dot: '#ffffff' },
-  { id: 'n8n',         name: 'n8n',          desc: 'Workflows',              color: '#ea4b71', dot: '#ea4b71' },
-  { id: 'slack',       name: 'Slack',        desc: 'Notifications',          color: '#e01e5a', dot: '#e01e5a' },
-  { id: 'googledrive', name: 'Drive',        desc: 'Fichiers & docs',        color: '#34a853', dot: '#34a853' },
-  { id: 'airtable',   name: 'Airtable',     desc: 'Tables & data',          color: '#18bfff', dot: '#18bfff' },
-  { id: 'linear',     name: 'Linear',       desc: 'Projets & sprints',      color: '#5e6ad2', dot: '#5e6ad2' },
-  { id: 'calendly',   name: 'Calendly',     desc: 'Agenda & RDV',           color: '#006bff', dot: '#006bff' },
+  { id: 'github',      name: 'GitHub',       desc: 'Code & repos',          color: '#e4e4e7', dot: '#c9d1d9', icon: Github },
+  { id: 'notion',      name: 'Notion',       desc: 'Pages & bases',         color: '#e4e4e7', dot: '#ffffff', icon: Notion },
+  { id: 'n8n',         name: 'n8n',          desc: 'Workflows',             color: '#ea4b71', dot: '#ea4b71', icon: N8n },
 ]
 
 const INITIALS: Record<string, string> = {
-  github: 'GH', notion: 'N', n8n: 'N8', slack: 'S',
-  googledrive: 'GD', airtable: 'AT', linear: 'LN', calendly: 'CL',
+  github: 'GH', notion: 'N', n8n: 'N8',
 }
 
 function createId() { return Math.random().toString(36).slice(2, 10) }
@@ -42,27 +39,6 @@ function getGreeting(): string {
   if (h >= 12 && h < 18) return 'Vos agents travaillent. Vous dirigez.'
   if (h >= 18 && h < 22) return 'L’orchestration ne dort jamais.'
   return 'Pendant que vous dormez, vos agents agissent.'
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DISCLAIMER
-// ─────────────────────────────────────────────────────────────────────────────
-function DisclaimerBanner() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '9px 14px', borderRadius: 10, marginBottom: 28,
-      background: 'rgba(255,255,255,0.025)',
-      border: '1px solid rgba(255,255,255,0.06)',
-    }}>
-      <span style={{ fontSize: 13, flexShrink: 0 }}>⚠️</span>
-      <p style={{ margin: 0, fontSize: 12.5, color: '#52525b', lineHeight: 1.5 }}>
-        Les conversations ne sont{' '}
-        <span style={{ color: '#71717a', fontWeight: 500 }}>pas sauvegardées</span>
-        {' '}— elles disparaissent si vous quittez la page.
-      </p>
-    </div>
-  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,75 +57,77 @@ function ToolsDrawer({ onClose }: { onClose: () => void }) {
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 400,
-        background: 'rgba(0,0,0,0.55)',
-        backdropFilter: 'blur(8px)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-        animation: 'oFadeIn 0.15s ease',
+        background: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
+        animation: 'oFadeIn 0.2s ease',
       }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 740,
-          margin: '0 20px',
-          background: '#111113',
-          border: '1px solid rgba(255,255,255,0.09)',
-          borderRadius: '22px 22px 0 0',
-          padding: '0 0 40px',
-          animation: 'oSlideUp 0.22s cubic-bezier(0.4,0,0.2,1)',
-          boxShadow: '0 -32px 80px rgba(0,0,0,0.9)',
+          width: '100%', maxWidth: 720,
+          background: 'rgba(10,10,12,0.85)',
+          backdropFilter: 'blur(30px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 24,
+          padding: '28px',
+          animation: 'oScaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05)',
+          position: 'relative',
         }}
       >
-        {/* drag handle */}
-        <div style={{ padding: '14px 0 0', display: 'flex', justifyContent: 'center' }}>
-          <div style={{ width: 38, height: 4, borderRadius: 4, background: 'rgba(255,255,255,0.1)' }} />
-        </div>
+        {/* Decorative top glow */}
+        <div style={{
+          position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+          width: '50%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.6), transparent)',
+          boxShadow: '0 4px 24px rgba(99,102,241,0.6)'
+        }} />
 
         {/* header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '18px 24px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
           <div>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#f4f4f5', letterSpacing: '-0.015em' }}>
-              Connexions MCP
-            </p>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#52525b', lineHeight: 1.5 }}>
-              Connectez vos outils — chaque intégration arrive bientôt.
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)' }}>
+                <Plug size={18} strokeWidth={2.2} />
+              </div>
+              <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.02em' }}>
+                Connexions MCP
+              </p>
+            </div>
+            <p style={{ margin: 0, fontSize: 13.5, color: '#a1a1aa', lineHeight: 1.5 }}>
+              Connectez vos outils locaux ou distants pour étendre les capacités de vos agents.
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              width: 30, height: 30, borderRadius: 8, border: 'none',
-              background: 'rgba(255,255,255,0.06)', color: '#71717a',
+              width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)',
+              background: 'rgba(255,255,255,0.03)', color: '#a1a1aa',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.15s', flexShrink: 0, marginTop: 2,
+              transition: 'all 0.15s ease', flexShrink: 0,
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.1)'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'}
+            onMouseEnter={e => {
+              const b = e.currentTarget as HTMLButtonElement
+              b.style.background = 'rgba(255,255,255,0.08)'
+              b.style.color = '#ffffff'
+            }}
+            onMouseLeave={e => {
+              const b = e.currentTarget as HTMLButtonElement
+              b.style.background = 'rgba(255,255,255,0.03)'
+              b.style.color = '#a1a1aa'
+            }}
           >
-            <X size={14} strokeWidth={2} />
+            <X size={16} strokeWidth={2} />
           </button>
-        </div>
-
-        {/* coming-soon pill */}
-        <div style={{ padding: '16px 24px 4px' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '4px 11px', borderRadius: 100,
-            background: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.2)',
-            fontSize: 11.5, color: '#6366f1',
-            fontWeight: 500, letterSpacing: '0.04em',
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#6366f1', animation: 'oPulse 2s ease-in-out infinite' }} />
-            Bientôt disponible
-          </span>
         </div>
 
         {/* tools grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(156px, 1fr))',
-          gap: 10, padding: '16px 24px 0',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gap: 12,
         }}>
           {MCP_TOOLS.map(tool => {
             const active = tapped === tool.id
@@ -159,52 +137,76 @@ function ToolsDrawer({ onClose }: { onClose: () => void }) {
                 onClick={() => handleTap(tool.id)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '13px 14px', borderRadius: 14,
-                  background: active ? `${tool.dot}10` : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${active ? tool.dot + '35' : 'rgba(255,255,255,0.07)'}`,
-                  cursor: 'pointer', transition: 'all 0.17s ease',
+                  padding: '14px 16px', borderRadius: 16,
+                  background: active ? `${tool.dot}10` : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${active ? tool.dot + '35' : 'rgba(255,255,255,0.05)'}`,
+                  cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   textAlign: 'left', position: 'relative', overflow: 'hidden',
                 }}
                 onMouseEnter={e => {
                   const b = e.currentTarget as HTMLButtonElement
-                  b.style.background = `${tool.dot}0d`
-                  b.style.borderColor = `${tool.dot}30`
+                  b.style.background = `${tool.dot}0a`
+                  b.style.borderColor = `${tool.dot}25`
+                  b.style.transform = 'translateY(-2px)'
+                  b.style.boxShadow = `0 8px 16px ${tool.dot}10`
                 }}
                 onMouseLeave={e => {
                   if (tapped !== tool.id) {
                     const b = e.currentTarget as HTMLButtonElement
-                    b.style.background = 'rgba(255,255,255,0.03)'
-                    b.style.borderColor = 'rgba(255,255,255,0.07)'
+                    b.style.background = 'rgba(255,255,255,0.02)'
+                    b.style.borderColor = 'rgba(255,255,255,0.05)'
+                    b.style.transform = 'translateY(0)'
+                    b.style.boxShadow = 'none'
                   }
                 }}
               >
-                {/* monogram avatar */}
+                {/* monogram avatar or custom icon */}
                 <div style={{
-                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                  background: `${tool.dot}18`,
+                  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                  background: `${tool.dot}15`,
                   border: `1px solid ${tool.dot}30`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: tool.dot, fontFamily: 'monospace', letterSpacing: '-0.02em' }}>
-                    {INITIALS[tool.id]}
-                  </span>
+                  {tool.icon ? (
+                    <tool.icon size={22} style={{ color: tool.dot }} />
+                  ) : (
+                    <span style={{ fontSize: 13, fontWeight: 700, color: tool.dot, fontFamily: 'monospace', letterSpacing: '-0.02em' }}>
+                      {INITIALS[tool.id]}
+                    </span>
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: '#e4e4e7', lineHeight: 1.2 }}>{tool.name}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#52525b', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tool.desc}</p>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#fafafa', lineHeight: 1.2 }}>{tool.name}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 12, color: '#a1a1aa', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tool.desc}</p>
                 </div>
 
                 {/* tap ripple */}
                 {active && (
                   <div style={{
-                    position: 'absolute', inset: 0, borderRadius: 14,
-                    background: `linear-gradient(90deg,transparent,${tool.dot}18,transparent)`,
-                    animation: 'oShimmer 0.7s ease',
+                    position: 'absolute', inset: 0, borderRadius: 16,
+                    background: `linear-gradient(90deg,transparent,${tool.dot}20,transparent)`,
+                    animation: 'oShimmer 0.6s ease',
                   }} />
                 )}
               </button>
             )
           })}
+        </div>
+
+        {/* coming-soon global pill */}
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 14px', borderRadius: 100,
+            background: 'rgba(99,102,241,0.08)',
+            border: '1px solid rgba(99,102,241,0.2)',
+            fontSize: 12, color: '#818cf8',
+            fontWeight: 500, letterSpacing: '0.02em',
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', boxShadow: '0 0 8px rgba(129,140,248,0.8)', animation: 'oPulse 2s ease-in-out infinite' }} />
+            Toutes les intégrations sont en cours de développement
+          </span>
         </div>
       </div>
     </div>
@@ -238,8 +240,13 @@ export default function ChatPage() {
     setGreetingDone(false)
     let i = 0
     const t = setInterval(() => {
-      if (i < full.length) { setGreeting(c => c + full.charAt(i)); i++ }
-      else { clearInterval(t); setGreetingDone(true) }
+      i++
+      if (i <= full.length) {
+        setGreeting(full.slice(0, i))
+      } else {
+        clearInterval(t)
+        setGreetingDone(true)
+      }
     }, 32)
     return () => clearInterval(t)
   }, [messages.length])
@@ -345,10 +352,12 @@ export default function ChatPage() {
       <style>{`
         @keyframes oFadeIn  { from{opacity:0}           to{opacity:1} }
         @keyframes oSlideUp { from{transform:translateY(36px);opacity:0} to{transform:translateY(0);opacity:1} }
+        @keyframes oScaleUp { from{transform:scale(0.96);opacity:0} to{transform:scale(1);opacity:1} }
         @keyframes oBlink   { 0%,100%{opacity:1}        50%{opacity:0} }
         @keyframes oSpin    { to{transform:rotate(360deg)} }
         @keyframes oShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
         @keyframes oPulse   { 0%,100%{opacity:1}        50%{opacity:0.3} }
+        @keyframes oSlideUpFade { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
         *{box-sizing:border-box}
         ::-webkit-scrollbar{width:5px}
         ::-webkit-scrollbar-track{background:transparent}
@@ -363,14 +372,42 @@ export default function ChatPage() {
         fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
       }}>
 
-        {/* ambient glow */}
+        {/* ambient glow - enhanced high quality */}
         <div aria-hidden style={{
-          position: 'fixed', top: '30%', left: '50%',
-          transform: 'translate(-50%,-50%)',
-          width: '70vw', height: '60vh',
-          background: 'radial-gradient(circle,rgba(99,102,241,0.04) 0%,transparent 70%)',
-          filter: 'blur(100px)', pointerEvents: 'none', zIndex: 0,
-        }} />
+          position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden'
+        }}>
+          {/* Top-left subtle indigo glow */}
+          <div style={{
+            position: 'absolute', top: '-15%', left: '-10%',
+            width: '60vw', height: '60vw',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)',
+            filter: 'blur(90px)',
+          }} />
+          
+          {/* Center-right deeper violet/blue glow */}
+          <div style={{
+            position: 'absolute', top: '25%', right: '-15%',
+            width: '70vw', height: '70vw',
+            background: 'radial-gradient(circle, rgba(79,70,229,0.04) 0%, transparent 60%)',
+            filter: 'blur(120px)',
+          }} />
+
+          {/* Bottom subtle glow */}
+          <div style={{
+            position: 'absolute', bottom: '-20%', left: '15%',
+            width: '60vw', height: '50vw',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.03) 0%, transparent 65%)',
+            filter: 'blur(100px)',
+          }} />
+
+          {/* Noise texture overlay to eliminate color banding and add premium feel */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
+            opacity: 0.035,
+            mixBlendMode: 'overlay',
+          }} />
+        </div>
 
         {showTools && <ToolsDrawer onClose={() => setShowTools(false)} />}
 
@@ -384,8 +421,8 @@ export default function ChatPage() {
 
             {isFirstMessage ? (
               /* ── WELCOME SCREEN ── */
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 40 }}>
-
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                
                 {/* logo */}
                 <div style={{
                   width: 80, height: 80, borderRadius: '50%', overflow: 'hidden',
@@ -413,47 +450,6 @@ export default function ChatPage() {
                     }} />
                   )}
                 </h1>
-
-                <p style={{
-                  fontSize: 15, color: '#52525b', textAlign: 'center',
-                  marginBottom: 28, lineHeight: 1.65, maxWidth: 420,
-                }}>
-                  Décrivez votre besoin ou choisissez un domaine pour commencer.
-                </p>
-
-                <DisclaimerBanner />
-
-                {/* category chips */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 7, maxWidth: 500 }}>
-                  {CATEGORIES.map((cat, i) => (
-                    <button key={i}
-                      onClick={() => {
-                        setInput(cat)
-                        setCollapsed(false)
-                        setTimeout(() => inputRef.current?.focus(), 40)
-                      }}
-                      style={{
-                        padding: '7px 15px', borderRadius: 100,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        background: 'transparent', color: '#71717a',
-                        fontSize: 13.5, cursor: 'pointer',
-                        transition: 'all 0.15s ease', outline: 'none',
-                      }}
-                      onMouseEnter={e => {
-                        const b = e.currentTarget as HTMLButtonElement
-                        b.style.background = 'rgba(255,255,255,0.05)'
-                        b.style.color = '#e4e4e7'
-                        b.style.borderColor = 'rgba(255,255,255,0.14)'
-                      }}
-                      onMouseLeave={e => {
-                        const b = e.currentTarget as HTMLButtonElement
-                        b.style.background = 'transparent'
-                        b.style.color = '#71717a'
-                        b.style.borderColor = 'rgba(255,255,255,0.08)'
-                      }}
-                    >{cat}</button>
-                  ))}
-                </div>
               </div>
             ) : (
               /* ── CONVERSATION ── */
@@ -476,7 +472,48 @@ export default function ChatPage() {
         }}>
           <div style={{ maxWidth: W, margin: '0 auto' }}>
 
-            {/* collapsed pill — only shows when not loading and not focused */}
+            {/* category chips on top of chatbox */}
+            {isFirstMessage && (
+              <div style={{ 
+                display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', gap: 7, 
+                marginBottom: 16, overflowX: 'auto',
+                scrollbarWidth: 'none', msOverflowStyle: 'none'
+              }}>
+                {CATEGORIES.slice(0, 4).map((cat, i) => (
+                  <button key={i}
+                    onClick={() => {
+                      setInput(cat)
+                      setCollapsed(false)
+                      setTimeout(() => inputRef.current?.focus(), 40)
+                    }}
+                    style={{
+                      padding: '7px 15px', borderRadius: 100,
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'transparent', color: '#71717a',
+                      fontSize: 13.5, cursor: 'pointer',
+                      outline: 'none',
+                      opacity: 0,
+                      animation: `oSlideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.05}s forwards`,
+                      transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      const b = e.currentTarget as HTMLButtonElement
+                      b.style.background = 'rgba(255,255,255,0.05)'
+                      b.style.color = '#e4e4e7'
+                      b.style.borderColor = 'rgba(255,255,255,0.14)'
+                    }}
+                    onMouseLeave={e => {
+                      const b = e.currentTarget as HTMLButtonElement
+                      b.style.background = 'transparent'
+                      b.style.color = '#71717a'
+                      b.style.borderColor = 'rgba(255,255,255,0.08)'
+                    }}
+                  >{cat}</button>
+                ))}
+              </div>
+            )}
+
+            {/* collapsed pill - only shows when not loading and not focused */}
             {collapsed && !isActive && !loading && (
               <button
                 onClick={() => {
@@ -486,22 +523,32 @@ export default function ChatPage() {
                 style={{
                   width: '100%', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', gap: 8,
-                  padding: '13px 20px', borderRadius: 15,
-                  background: '#111113', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#3a3a40', fontSize: 14.5, cursor: 'pointer',
-                  transition: 'all 0.18s ease',
+                  padding: '13px 20px', borderRadius: 24,
+                  background: 'rgba(10,10,12,0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)',
+                  color: '#52525b', fontSize: 14.5, cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  position: 'relative', overflow: 'hidden'
                 }}
                 onMouseEnter={e => {
                   const b = e.currentTarget as HTMLButtonElement
                   b.style.borderColor = 'rgba(255,255,255,0.15)'
-                  b.style.color = '#71717a'
+                  b.style.color = '#a1a1aa'
+                  b.style.background = 'rgba(10,10,12,0.85)'
                 }}
                 onMouseLeave={e => {
                   const b = e.currentTarget as HTMLButtonElement
                   b.style.borderColor = 'rgba(255,255,255,0.08)'
-                  b.style.color = '#3a3a40'
+                  b.style.color = '#52525b'
+                  b.style.background = 'rgba(10,10,12,0.7)'
                 }}
               >
+                <div style={{
+                  position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                  width: '30%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.3), transparent)',
+                }} />
                 <ArrowUp size={14} strokeWidth={2} />
                 <span>Continuer la conversation…</span>
               </button>
@@ -510,15 +557,26 @@ export default function ChatPage() {
             {/* full input */}
             {(!collapsed || isActive || loading) && (
               <div style={{
-                background: '#111113',
-                border: `1px solid ${isActive ? 'rgba(255,255,255,0.13)' : 'rgba(255,255,255,0.07)'}`,
-                borderRadius: 18,
+                background: 'rgba(10,10,12,0.85)',
+                backdropFilter: 'blur(30px)',
+                border: `1px solid ${isActive ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.08)'}`,
+                borderRadius: 24,
                 boxShadow: isActive
-                  ? '0 0 0 3px rgba(99,102,241,0.07), 0 8px 40px rgba(0,0,0,0.65)'
-                  : '0 4px 24px rgba(0,0,0,0.5)',
-                transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+                  ? '0 24px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(99,102,241,0.15)'
+                  : '0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
+                transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
                 overflow: 'hidden',
+                position: 'relative'
               }}>
+
+                {/* Decorative top glow matching MCP modal, but subtle */}
+                <div style={{
+                  position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                  width: '40%', height: 1, background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent)',
+                  boxShadow: '0 2px 14px rgba(99,102,241,0.4)',
+                  opacity: isActive ? 1 : 0.4,
+                  transition: 'opacity 0.25s ease'
+                }} />
 
                 {/* textarea */}
                 <textarea
@@ -600,9 +658,9 @@ export default function ChatPage() {
 
             <p style={{
               textAlign: 'center', fontSize: 11,
-              color: '#202028', marginTop: 7, letterSpacing: '0.01em',
+              color: '#ffffff', marginTop: 7, letterSpacing: '0.01em', opacity: 0.8,
             }}>
-              OrchestrAI peut commettre des erreurs — vérifiez les informations importantes.
+              Les conversations ne sont pas sauvegardées - elles disparaissent si vous quittez la page.
             </p>
           </div>
         </div>

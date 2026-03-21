@@ -1,5 +1,6 @@
 'use client'
 import { Cpu, Zap, GitBranch, Activity, Clock, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 const UPCOMING = [
   {
@@ -99,7 +100,8 @@ export default function OperationsPage() {
         </div>
 
         {/* Notify CTA */}
-        <button
+        <Link
+          href="/chat"
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '10px 24px', borderRadius: 12,
@@ -108,12 +110,12 @@ export default function OperationsPage() {
             color: '#a1a1aa', fontSize: 14, cursor: 'pointer',
             transition: 'all 0.2s ease',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.color = '#e4e4e7' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.color = '#a1a1aa' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#e4e4e7' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}
         >
           Retourner au chat
           <ArrowRight size={14} strokeWidth={2} />
-        </button>
+        </Link>
       </div>
     </div>
   )

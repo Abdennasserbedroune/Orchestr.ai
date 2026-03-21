@@ -25,18 +25,43 @@ function checkRateLimit(ip: string): boolean {
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string }
 
 function validateMessages(body: unknown): ChatMessage[] | null {
-  if (!body || typeof body !== 'object') return null
-  const { messages } = body as Record<string, unknown>
-  if (!Array.isArray(messages)) return null
-  if (messages.length === 0 || messages.length > 50) return null
-  for (const m of messages) {
-    if (!m || typeof m !== 'object') return null
-    const { role, content } = m as Record<string, unknown>
-    if (!['user', 'assistant'].includes(role as string)) return null
-    if (typeof content !== 'string' || content.length === 0) return null
-    if (content.length > 8000) return null
+  if (!body || typeof body !== 'object') {
+    console.error('[API] Validation failed: body is not an object', body)
+    return null
   }
-  return messages as ChatMessage[]
+  const { messages } = body as Record<string, unknown>
+  if (!Array.isArray(messages)) {
+    console.error('[API] Validation failed: messages is not an array')
+    return null
+  }
+  if (messages.length === 0 || messages.length > 100) {
+    console.error('[API] Validation failed: messages length invalid', messages.length)
+    return null
+  }
+  
+  const valid: ChatMessage[] = []
+  for (const m of messages) {
+    if (!m || typeof m !== 'object') continue
+    const { role, content } = m as Record<string, unknown>
+    if (!['user', 'assistant'].includes(role as string)) continue
+    if (typeof content !== 'string') continue
+    
+    // Ignore empty messages quietly to avoid breaking the whole history
+    if (content.trim().length === 0) continue
+    
+    // Safeguard length
+    valid.push({ 
+      role: role as 'user' | 'assistant',
+      content: content.length > 15000 ? content.slice(0, 15000) + '...' : content 
+    })
+  }
+  
+  if (valid.length === 0) {
+    console.error('[API] Validation failed: no valid messages after filtering')
+    return null
+  }
+  
+  return valid
 }
 
 // ── Groq client (lazy init) ───────────────────────────────────────────
@@ -134,7 +159,7 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const model = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile'
+        const model = process.env.GROQ_MODEL ?? 'llama-3.1-8b-instant'
 
         if (process.env.GROQ_API_KEY) {
           const groq = getGroqClient()

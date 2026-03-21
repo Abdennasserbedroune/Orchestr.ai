@@ -80,12 +80,17 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-bg overflow-hidden font-sans">
-      {/* Background glow */}
-      <div
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none rounded-full opacity-20 -z-10"
-        style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%)', filter: 'blur(80px)' }}
-        aria-hidden="true"
-      />
+      {/* Premium ambient glow matching chat page */}
+      <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {/* Top-left subtle indigo glow */}
+        <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: '60vw', height: '60vw', background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)', filter: 'blur(90px)' }} />
+        {/* Center-right deeper violet/blue glow */}
+        <div style={{ position: 'absolute', top: '25%', right: '-15%', width: '70vw', height: '70vw', background: 'radial-gradient(circle, rgba(79,70,229,0.04) 0%, transparent 60%)', filter: 'blur(120px)' }} />
+        {/* Bottom subtle glow */}
+        <div style={{ position: 'absolute', bottom: '-20%', left: '15%', width: '60vw', height: '50vw', background: 'radial-gradient(circle, rgba(99,102,241,0.03) 0%, transparent 65%)', filter: 'blur(100px)' }} />
+        {/* Noise texture overlay */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")", opacity: 0.035, mixBlendMode: 'overlay' }} />
+      </div>
 
       {/* Navbar */}
       <nav className="relative z-10 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5">
@@ -125,8 +130,8 @@ export default function Home() {
               <span className="opacity-0" aria-hidden="true">placeholder</span>
             )}
           </h1>
-          <p className="text-[#71717a] text-[14px] sm:text-[15px] font-normal">
-            D&eacute;crivez votre workflow. Vos agents s&apos;en chargent.
+          <p className="text-[#a1a1aa] text-[15px] font-normal mt-2">
+            Décrivez votre workflow. Vos agents s'en chargent.
           </p>
         </div>
 
@@ -174,16 +179,18 @@ export default function Home() {
 
           {/* Input box */}
           <div
-            className="relative w-full rounded-[28px] border transition-all duration-300"
+            className="relative w-full rounded-[28px] border transition-all duration-300 bg-[rgba(10,10,12,0.85)] backdrop-blur-[30px]"
             style={{
-              background: '#131313',
-              borderColor: inputActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.07)',
+              borderColor: inputActive ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
               boxShadow: inputActive
-                ? '0 20px 56px -12px rgba(0,0,0,0.9), 0 0 0 1px rgba(29,78,216,0.14)'
-                : '0 8px 24px -8px rgba(0,0,0,0.6)',
+                ? '0 24px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(99,102,241,0.15)'
+                : '0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
             }}
           >
-            <div className="px-4 pt-4 pb-[64px]">
+            {/* Top subtle border glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[40%] h-[1px] opacity-20 pointer-events-none rounded-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent)' }} />
+
+            <div className="px-5 pt-5 pb-[64px] relative z-10">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -191,9 +198,9 @@ export default function Home() {
                 onKeyDown={handleKeyDown}
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
-                placeholder="D\u00e9crivez votre besoin, lancez un workflow, interrogez un agent\u2026"
+                placeholder="Décrivez votre besoin, lancez un workflow, interrogez un agent…"
                 rows={focused || input.length > 0 ? 2 : 1}
-                className="w-full bg-transparent text-[16px] text-[#fafafa] outline-none focus:outline-none focus:ring-0 placeholder:text-[#3f3f46] ml-1 caret-white resize-none overflow-hidden leading-relaxed"
+                className="w-full bg-transparent text-[16px] text-[#fafafa] outline-none focus:outline-none focus:ring-0 placeholder:text-[#52525b] caret-white resize-none overflow-hidden leading-relaxed"
                 style={{ border: 'none', boxShadow: 'none', minHeight: '28px', maxHeight: '160px' }}
                 aria-label="Describe your workflow or task"
                 autoComplete="off"
@@ -201,7 +208,7 @@ export default function Home() {
               />
             </div>
 
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between z-10">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
@@ -248,8 +255,8 @@ export default function Home() {
             </div>
           </div>
 
-          <p className="text-center text-[11px] text-[#2a2a2a] mt-3 font-mono">
-            Orchestrai peut commettre des erreurs. V&eacute;rifiez les informations importantes.
+          <p className="text-center text-[12px] text-[#71717a] mt-4">
+            Orchestrai peut commettre des erreurs. Vérifiez les informations importantes.
           </p>
         </div>
       </main>

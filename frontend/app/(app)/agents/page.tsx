@@ -15,25 +15,13 @@ interface GHItem {
   download_url: string | null
 }
 
-type TriggerType = 'Webhook' | 'Planifié' | 'Déclenché' | 'Manuel' | 'Complexe'
-
 interface WorkflowEntry {
   name: string
   title: string
   description: string
   category: string
-  trigger: TriggerType
   path: string
   rawUrl: string
-}
-
-// ── Trigger meta ─────────────────────────────────────────────
-const TRIGGER_META: Record<TriggerType, { color: string; bg: string; label: string }> = {
-  Webhook: { color: '#3B82F6', bg: 'rgba(59,130,246,0.1)', label: 'Webhook' },
-  Planifié: { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', label: 'Planifié' },
-  Déclenché: { color: '#10B981', bg: 'rgba(16,185,129,0.1)', label: 'Déclenché' },
-  Manuel: { color: '#94A3B8', bg: 'rgba(148,163,184,0.1)', label: 'Manuel' },
-  Complexe: { color: '#A855F7', bg: 'rgba(168,85,247,0.1)', label: 'Complexe' },
 }
 
 // ── Category metadata ────────────────────────────────────────
@@ -78,9 +66,90 @@ const KNOWN_COUNTS: Record<string, number> = {
 }
 
 // ── Helpers ──────────────────────────────────────────────────
+function getFallbackEmoji(name: string): string {
+  const map: Record<string, string> = {
+    'activecampaign': '✉️', 'apify': '🕷️', 'baserow': '🗄️', 'bitwarden': '🛡️',
+    'box': '📦', 'calendly': '📆', 'chatwoot': '💬', 'clearbit': '🔍',
+    'clickup': '✅', 'clockify': '⏱️', 'coda': '📄', 'customerio': '📬',
+    'discord': '🎮', 'documenso': '🖋️', 'dropbox': '📁', 'elasticsearch': '🔎',
+    'eventbrite': '🎟️', 'facebook': '👍', 'figma': '🎨', 'freshdesk': '🎧',
+    'github': '🐙', 'gitlab': '🦊', 'gmail': '📧', 'google': '🔍',
+    'googlecloud': '☁️', 'googledrive': '📂', 'googlesheets': '📊', 'graphql': '🕸️',
+    'hubspot': '🔶', 'hunter': '🎯', 'intercom': '💬', 'jira': '🔵',
+    'kafka': '🚀', 'klaviyo': '✉️', 'linear': '🎯', 'linkedin': '💼',
+    'mailchimp': '🐵', 'mailerlite': '💌', 'mailgun': '🔫', 'mastodon': '🐘',
+    'mattermost': '💬', 'medium': '📝', 'microsoft': '🪟', 'microsoftteams': '🤝',
+    'mixpanel': '📈', 'mongodb': '🍃', 'mysql': '🐬', 'n8n': '☁️',
+    'nocodb': '🗃️', 'notion': '📝', 'openai': '🤖', 'phantombuster': '👻',
+    'pipedrive': '📉', 'postgresql': '🐘', 'posthog': '🦔', 'rabbitmq': '🐇',
+    'redis': '🔴', 'salesforce': '☁️', 'segment': '🧩', 'sendgrid': '📤',
+    'sentry': '👁️', 'shopify': '🛒', 'slack': '💬', 'snowflake': '❄️',
+    'spotify': '🎵', 'strapi': '🚀', 'stripe': '💳', 'supabase': '⚡',
+    'telegram': '✈️', 'todoist': '📋', 'trello': '📋', 'twilio': '📱',
+    'twitch': '🎮', 'twitter': '🐦', 'typeform': '📋', 'webflow': '🌐',
+    'whatsapp': '💬', 'woocommerce': '🛍️', 'wordpress': '✍️', 'youtube': '▶️',
+    'zendesk': '🎧', 'zoho': '🏢', 'zoom': '📹'
+  }
+  const low = name.toLowerCase().replace(/_/g, '').replace(/-/g, '')
+  if (map[low]) return map[low]
+  
+  const fallbacks = ['🔗', '⚡', '⚙️', '🛠️', '🔄', '🔌', '📦', '📡', '💡', '🧩', '🚀', '🔮', '🌟', '💻']
+  let hash = 0
+  for (let i = 0; i < low.length; i++) hash = Math.imul(31, hash) + low.charCodeAt(i) | 0
+  return fallbacks[Math.abs(hash) % fallbacks.length]
+}
+
+function getFallbackColor(name: string): string {
+  const colors = ['#6366F1', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#06B6D4', '#EAB308']
+  const low = name.toLowerCase().replace(/_/g, '').replace(/-/g, '')
+  let hash = 0
+  for (let i = 0; i < low.length; i++) hash = Math.imul(31, hash) + low.charCodeAt(i) | 0
+  return colors[Math.abs(hash) % colors.length]
+}
+
+function formatAgentName(name: string): string {
+  const map: Record<string, string> = {
+    'activecampaign': 'Active campaign',
+    'googlesheets': 'Google Sheets',
+    'googledrive': 'Google Drive',
+    'googlecloud': 'Google Cloud',
+    'googlecalendar': 'Google Calendar',
+    'googlecontacts': 'Google Contacts',
+    'hubspotcrm': 'HubSpot',
+    'mailchimp': 'Mailchimp',
+    'mailerlite': 'MailerLite',
+    'pipedrive': 'Pipedrive',
+    'salesforce': 'Salesforce',
+    'sendgrid': 'SendGrid',
+    'whatsapp': 'WhatsApp',
+    'woocommerce': 'WooCommerce',
+    'wordpress': 'WordPress',
+    'youtube': 'YouTube',
+    'zendesk': 'Zendesk',
+    'clickup': 'ClickUp',
+    'customerio': 'Customer.io',
+    'microsoftteams': 'Microsoft Teams',
+    'microsoftsql': 'Microsoft SQL Server',
+  }
+  const low = name.toLowerCase().replace(/_/g, '').replace(/-/g, '')
+  if (map[low]) return map[low]
+
+  return name
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
 function catMeta(name: string) {
-  const key = Object.keys(CAT_META).find(k => name.toLowerCase().startsWith(k.toLowerCase()))
-  return key ? CAT_META[key] : { icon: '⚡', label: name, description: 'Collection de workflows d\'automatisation n8n prêts à déployer.', color: '#6366F1' }
+  const key = Object.keys(CAT_META).find(k => name.toLowerCase().includes(k.toLowerCase()))
+  if (key) return CAT_META[key]
+  
+  return { 
+    icon: getFallbackEmoji(name), 
+    label: formatAgentName(name), 
+    description: 'Collection de workflows d\'automatisation n8n prêts à déployer pour ce service.', 
+    color: getFallbackColor(name) 
+  }
 }
 
 /**
@@ -188,15 +257,6 @@ function inferDescription(filename: string, catName: string): string {
   return `Automatise vos processus ${cat.label} grâce à ce workflow n8n optimisé pour la production.`
 }
 
-function getTrigger(filename: string): TriggerType {
-  const f = filename.toLowerCase()
-  if (f.includes('webhook')) return 'Webhook'
-  if (f.includes('schedule') || f.includes('cron') || f.includes('interval')) return 'Planifié'
-  if (f.includes('trigger') || f.includes('triggered')) return 'Déclenché'
-  if (f.includes('manual')) return 'Manuel'
-  return 'Complexe'
-}
-
 // ── Download helper ──────────────────────────────────────────
 async function downloadJson(url: string, filename: string) {
   try {
@@ -213,17 +273,16 @@ async function downloadJson(url: string, filename: string) {
 // ── Workflow schema inference ────────────────────────────────
 interface SchemaNode { label: string; sub: string }
 
-function inferSchema(filename: string, catName: string, trigger: TriggerType): SchemaNode[] {
+function inferSchema(filename: string, catName: string): SchemaNode[] {
   const f = filename.toLowerCase()
   const cat = catMeta(catName)
 
   // Node 1: Trigger source
   const triggerNode: SchemaNode =
-    trigger === 'Webhook' ? { label: 'Webhook', sub: 'Requête entrante' } :
-      trigger === 'Planifié' ? { label: 'Planificateur', sub: 'Cron / Intervalle' } :
-        trigger === 'Déclenché' ? { label: 'Déclencheur', sub: 'Événement externe' } :
-          trigger === 'Manuel' ? { label: 'Manuel', sub: 'Clic utilisateur' } :
-            { label: 'Workflow', sub: 'Source complexe' }
+    f.includes('webhook') ? { label: 'Webhook', sub: 'Requête entrante' } :
+      f.includes('schedule') || f.includes('cron') ? { label: 'Planifié', sub: 'Cron / Intervalle' } :
+          f.includes('manual') ? { label: 'Manuel', sub: 'Clic utilisateur' } :
+            { label: 'Déclencheur', sub: 'Événement externe' }
 
   // Node 2: Processing
   const processNode: SchemaNode =
@@ -263,30 +322,20 @@ function WorkflowCard({
   onCopy: (url: string, id: string) => void
   onDownload: (url: string, name: string) => void
 }) {
-  const meta = TRIGGER_META[wf.trigger]
   const cat = catMeta(catName)
 
   return (
-    <div className="group relative flex flex-col rounded-[20px] border border-white/[0.07] bg-[#0f0f0f] hover:border-white/[0.14] hover:bg-[#141414] transition-all duration-300 overflow-hidden">
+    <div className="group relative flex flex-col rounded-[24px] border border-white/[0.08] bg-[rgba(10,10,12,0.85)] backdrop-blur-[30px] hover:border-white/[0.15] hover:bg-[rgba(20,20,24,0.85)] transition-all duration-300 overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] hover:shadow-[0_24px_80px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)]">
 
-      {/* Top accent line */}
-      <div className="h-[1px] w-full" style={{ background: `linear-gradient(to right, ${meta.color}60, transparent)` }} />
+      {/* Top accent glow line */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[1px]" style={{ background: `linear-gradient(to right, transparent, ${cat.color}80, transparent)`, boxShadow: `0 2px 14px ${cat.color}60` }} />
 
-      <div className="flex flex-col gap-3 p-5 flex-1">
+      <div className="flex flex-col gap-3 p-5 flex-1 relative z-10">
 
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
-          {/* Trigger badge */}
-          <span
-            className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border"
-            style={{ color: meta.color, background: meta.bg, borderColor: `${meta.color}30` }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: meta.color }} />
-            {meta.label}
-          </span>
-
-          {/* Icon */}
-          <span className="text-xl leading-none opacity-60">{cat.icon}</span>
+          {/* Category Icon */}
+          <span className="text-[22px] leading-none opacity-80">{cat.icon}</span>
         </div>
 
         {/* Title */}
@@ -295,13 +344,13 @@ function WorkflowCard({
         </h3>
 
         {/* Description */}
-        <p className="text-[13px] text-[#71717a] leading-relaxed line-clamp-2">
+        <p className="text-[13px] text-[#a1a1aa] leading-relaxed line-clamp-2">
           {wf.description}
         </p>
 
         {/* Workflow schema — 3-node flow diagram */}
         <div className="flex items-center gap-0 mt-1">
-          {inferSchema(wf.name, catName, wf.trigger).map((node, idx) => (
+          {inferSchema(wf.name, catName).map((node, idx) => (
             <div key={idx} className="flex items-center min-w-0">
               <div
                 className="flex flex-col items-center px-2.5 py-1.5 rounded-[10px] border border-white/[0.06] bg-white/[0.02] min-w-0"
@@ -377,8 +426,11 @@ function CategoryCard({ cat, count, onClick }: { cat: GHItem; count?: number; on
   return (
     <button
       onClick={onClick}
-      className="group relative flex flex-col gap-3 p-5 rounded-[20px] border border-white/[0.07] bg-[#0f0f0f] hover:border-white/[0.16] hover:bg-[#141414] transition-all duration-300 text-left overflow-hidden"
+      className="group relative flex flex-col gap-3 p-5 rounded-[24px] border border-white/[0.08] bg-[rgba(10,10,12,0.85)] backdrop-blur-[30px] hover:border-white/[0.15] hover:bg-[rgba(20,20,24,0.85)] transition-all duration-300 text-left overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] hover:-translate-y-1 hover:shadow-[0_24px_80px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)]"
     >
+      {/* Top subtle border glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[40%] h-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ background: `linear-gradient(to right, transparent, ${m.color}80, transparent)`, boxShadow: `0 2px 14px ${m.color}60` }} />
+
       {/* Subtle color glow */}
       <div
         className="absolute -top-6 -right-6 w-20 h-20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -404,7 +456,7 @@ function CategoryCard({ cat, count, onClick }: { cat: GHItem; count?: number; on
       </div>
 
       {/* Description (visible on hover) */}
-      <p className="text-[12px] text-[#71717a] leading-relaxed line-clamp-2 relative z-10">
+      <p className="text-[12px] text-[#a1a1aa] leading-relaxed line-clamp-2 relative z-10">
         {m.description}
       </p>
 
@@ -423,7 +475,6 @@ export default function AgentsPage() {
   const [selectedCat, setSelectedCat] = useState<GHItem | null>(null)
   const [workflows, setWorkflows] = useState<WorkflowEntry[]>([])
   const [query, setQuery] = useState('')
-  const [trigFilter, setTrigFilter] = useState<TriggerType | 'all'>('all')
   const [loadingCats, setLoadingCats] = useState(true)
   const [loadingWf, setLoadingWf] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -465,7 +516,6 @@ export default function AgentsPage() {
               title: formatTitle(d.name),
               description: inferDescription(d.name, cat.name),
               category: cat.name,
-              trigger: getTrigger(d.name),
               path: d.path,
               rawUrl: d.download_url ?? `${GH_RAW}/${cat.name}/${d.name}`,
             }))
@@ -489,11 +539,9 @@ export default function AgentsPage() {
 
   const filteredWf = useMemo(() =>
     workflows.filter(w => {
-      const matchQ = !query || w.title.toLowerCase().includes(query.toLowerCase())
-      const matchT = trigFilter === 'all' || w.trigger === trigFilter
-      return matchQ && matchT
+      return !query || w.title.toLowerCase().includes(query.toLowerCase())
     }),
-    [workflows, query, trigFilter]
+    [workflows, query]
   )
 
   // ── Actions ────────────────────────────────────────────────
@@ -501,7 +549,6 @@ export default function AgentsPage() {
     setSelectedCat(null)
     setWorkflows([])
     setQuery('')
-    setTrigFilter('all')
     setError(null)
   }
 
@@ -531,14 +578,52 @@ export default function AgentsPage() {
   const isLoading = loadingCats || loadingWf
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative h-full overflow-y-auto">
+      <style>{`
+        ::-webkit-scrollbar{width:5px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:6px}
+        input::placeholder{color:#52525b !important}
+      `}</style>
+      
+      {/* Premium ambient glow matching chat page */}
+      <div aria-hidden style={{
+        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden'
+      }}>
+        {/* Top-left subtle indigo glow */}
+        <div style={{
+          position: 'absolute', top: '-15%', left: '-10%',
+          width: '60vw', height: '60vw',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)',
+          filter: 'blur(90px)',
+        }} />
+        
+        {/* Center-right deeper violet/blue glow */}
+        <div style={{
+          position: 'absolute', top: '25%', right: '-15%',
+          width: '70vw', height: '70vw',
+          background: 'radial-gradient(circle, rgba(79,70,229,0.04) 0%, transparent 60%)',
+          filter: 'blur(120px)',
+        }} />
 
-      {/* Ambient glow */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] pointer-events-none z-0 rounded-full opacity-20"
-        style={{ background: 'radial-gradient(circle, rgba(29,78,216,0.15) 0%, transparent 70%)', filter: 'blur(80px)' }}
-      />
+        {/* Bottom subtle glow */}
+        <div style={{
+          position: 'absolute', bottom: '-20%', left: '15%',
+          width: '60vw', height: '50vw',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.03) 0%, transparent 65%)',
+          filter: 'blur(100px)',
+        }} />
 
-      <div className="relative p-6 md:p-10 max-w-[1400px] mx-auto flex flex-col gap-8">
+        {/* Noise texture overlay */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E\")",
+          opacity: 0.035,
+          mixBlendMode: 'overlay',
+        }} />
+      </div>
+
+      <div className="relative z-10 p-6 md:p-10 max-w-[1400px] mx-auto flex flex-col gap-8">
 
         {/* ══ HEADER ══════════════════════════════════════════ */}
         <header className="animate-fade-in">
@@ -590,16 +675,16 @@ export default function AgentsPage() {
                 <div className="flex items-center gap-3">
                   <h1 className="font-display text-3xl font-semibold text-[#fafafa] tracking-tight">Agents</h1>
                   {!loadingCats && (
-                    <span className="text-[11px] font-mono text-[#52525b] border border-white/[0.08] rounded-full px-2.5 py-1">
+                    <span className="text-[12px] font-medium font-mono text-[#a1a1aa] bg-white/[0.04] border border-white/[0.1] rounded-full px-3 py-1">
                       {categories.length} catégories · 2 061 workflows
                     </span>
                   )}
                 </div>
-                <p className="text-[14px] text-[#71717a] max-w-xl">
+                <p className="text-[15px] text-[#a1a1aa] max-w-xl">
                   Parcourez et déployez des workflows n8n prêts pour la production sur l&apos;ensemble de vos intégrations.
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-[12px] font-mono text-[#52525b]">
+              <div className="flex items-center gap-2 text-[12px] font-mono text-[#a1a1aa]">
                 <Zap size={12} className="text-brand" />
                 Propulsé par n8n
               </div>
@@ -614,7 +699,7 @@ export default function AgentsPage() {
           <div className="relative">
             <Search
               size={15}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#52525b] pointer-events-none"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-[#71717a] pointer-events-none z-10"
             />
             <input
               type="text"
@@ -622,57 +707,22 @@ export default function AgentsPage() {
               onChange={e => setQuery(e.target.value)}
               placeholder={selectedCat
                 ? `Rechercher dans ${catMeta(selectedCat.name).label}…`
-                : 'Rechercher une catégorie…'}
-              className="w-full h-12 pl-11 pr-10 bg-[#0f0f0f] border border-white/[0.07] hover:border-white/[0.12] focus:border-white/[0.2] rounded-[16px] text-[14px] text-[#fafafa] outline-none placeholder:text-[#3f3f46] transition-all"
+                : 'Rechercher un agent actif, une catégorie…'}
+              className="w-full h-12 pl-11 pr-10 bg-[rgba(10,10,12,0.85)] backdrop-blur-[30px] border border-white/[0.08] hover:border-white/[0.15] focus:border-white/[0.2] focus:bg-[rgba(20,20,24,0.85)] rounded-[24px] text-[15px] font-medium text-[#fafafa] outline-none placeholder:text-[#52525b] transition-all shadow-[0_20px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.05)] focus:shadow-[0_24px_80px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08),0_0_0_1px_rgba(99,102,241,0.15)] relative z-0"
               aria-label="Rechercher"
             />
+            {/* Top accent glow line for search bar */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[40%] h-[1px] opacity-30 pointer-events-none z-10" style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent)' }} />
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#52525b] hover:text-white transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#71717a] hover:text-white transition-colors z-10 bg-white/5 p-1 rounded-full"
                 aria-label="Effacer"
               >
-                <X size={14} />
+                <X size={12} strokeWidth={2.5} />
               </button>
             )}
           </div>
-
-          {/* Trigger filters */}
-          {selectedCat && workflows.length > 0 && (
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par type de déclencheur">
-              {(['all', 'Webhook', 'Planifié', 'Déclenché', 'Manuel', 'Complexe'] as const).map(t => {
-                const isActive = trigFilter === t
-                const m = t !== 'all' ? TRIGGER_META[t] : null
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setTrigFilter(t)}
-                    aria-pressed={isActive}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border transition-all duration-200"
-                    style={{
-                      color: isActive ? (m ? m.color : '#fff') : '#52525b',
-                      background: isActive ? (m ? m.bg : 'rgba(255,255,255,0.08)') : 'transparent',
-                      borderColor: isActive ? (m ? `${m.color}40` : 'rgba(255,255,255,0.2)') : 'rgba(255,255,255,0.07)',
-                    }}
-                  >
-                    {t !== 'all' && m && (
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: m.color }} />
-                    )}
-                    {t === 'all' ? 'Tous' : m!.label}
-                  </button>
-                )
-              })}
-
-              {(query || trigFilter !== 'all') && (
-                <button
-                  onClick={() => { setQuery(''); setTrigFilter('all') }}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#52525b] hover:text-white transition-colors px-2"
-                >
-                  <X size={11} /> Réinitialiser
-                </button>
-              )}
-            </div>
-          )}
         </div>
 
         {/* ══ RESULTS BAR ══════════════════════════════════════ */}
@@ -730,7 +780,7 @@ export default function AgentsPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 pb-12 animate-fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-5 pb-12 animate-fade-in">
                 {filteredCats.map(cat => (
                   <CategoryCard
                     key={cat.name}
@@ -757,7 +807,7 @@ export default function AgentsPage() {
                   Essayez un autre mot-clé ou réinitialisez les filtres.
                 </p>
                 <button
-                  onClick={() => { setQuery(''); setTrigFilter('all') }}
+                  onClick={() => { setQuery('') }}
                   className="text-[13px] font-semibold text-brand hover:text-brand-hover transition-colors"
                 >
                   Réinitialiser les filtres
