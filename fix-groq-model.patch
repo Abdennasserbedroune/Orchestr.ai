@@ -1,0 +1,205 @@
+From e44d6560e1e9f74061fc3ab385ec02a0250d24e1 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 23 Oct 2026 13:33:46 +0000
+Subject: [PATCH] fix: migrate Groq model from decommissioned
+ llama-3.3-70b-versatile to openai/gpt-oss-120b
+
+- Groq decommissioned llama-3.3-70b-versatile on 2026-08-16 (cause of the 500s)
+- Model now configurable via GROQ_MODEL env var
+- /api/brief: lazy Groq client + try/catch (returns 502/503 instead of crashing with 500)
+- Raise max_tokens since gpt-oss spends tokens on reasoning
+---
+ .claude/CLAUDE.md                             |  2 +-
+ .../orchestrai-backend/SKILL-backend.md       |  2 +-
+ .../SKILL-model-guidance.md                   |  6 +++---
+ .claude/skills/orchestrai/SKILL.md            |  4 ++--
+ GEMINI.md                                     |  2 +-
+ frontend/.env.example                         |  7 ++++---
+ frontend/app/api/brief/route.ts               | 21 +++++++++++++++----
+ frontend/config/models.ts                     |  4 ++--
+ frontend/lib/orchestrai.ts                    |  3 ++-
+ 9 files changed, 33 insertions(+), 18 deletions(-)
+
+diff --git a/.claude/CLAUDE.md b/.claude/CLAUDE.md
+index 9a0f39a..8a4d1c4 100644
+--- a/.claude/CLAUDE.md
++++ b/.claude/CLAUDE.md
+@@ -239,7 +239,7 @@ Everything produced for this project must be justifiable against that bar.
+ 
+ **The stack:** Next.js 14 App Router, TypeScript strict, Tailwind CSS v3 +
+ CSS custom properties, Supabase (PostgreSQL + RLS + Auth), Groq API
+-(llama-3.3-70b-versatile), deployed on Vercel.
++(openai/gpt-oss-120b), deployed on Vercel.
+ 
+ **The model running this session:** GLM-4.5-Air (free, Z.ai via OpenRouter).
+ 131K context. Thinking mode available. Agent-optimized MoE architecture.
+diff --git a/.claude/skills/orchestrai-backend/SKILL-backend.md b/.claude/skills/orchestrai-backend/SKILL-backend.md
+index 7419112..c80e333 100644
+--- a/.claude/skills/orchestrai-backend/SKILL-backend.md
++++ b/.claude/skills/orchestrai-backend/SKILL-backend.md
+@@ -228,7 +228,7 @@ export async function POST(request: Request) {
+   let groqStream: AsyncIterable<Groq.Chat.ChatCompletionChunk>;
+   try {
+     groqStream = await groq.chat.completions.create({
+-      model: 'llama-3.3-70b-versatile',
++      model: 'openai/gpt-oss-120b',
+       messages: groqMessages,
+       stream: true,
+       max_tokens: 2048,
+diff --git a/.claude/skills/orchestrai-model-guidance/SKILL-model-guidance.md b/.claude/skills/orchestrai-model-guidance/SKILL-model-guidance.md
+index 3645ceb..f4f9cb3 100644
+--- a/.claude/skills/orchestrai-model-guidance/SKILL-model-guidance.md
++++ b/.claude/skills/orchestrai-model-guidance/SKILL-model-guidance.md
+@@ -148,7 +148,7 @@ CONSISTENCY CHECKLIST
+ When you lose track of what you were doing, re-read these facts:
+ 
+ **Project:** OrchestrAI — AI Agent Operating System. Next.js 14 App Router.
+-**Stack:** TypeScript + Tailwind CSS v3 + Supabase + Groq (llama-3.3-70b-versatile).
++**Stack:** TypeScript + Tailwind CSS v3 + Supabase + Groq (openai/gpt-oss-120b).
+ **Structure:**
+ - Pages live in `frontend/app/(app)/` (with sidebar) or `frontend/app/(public)/` (without)
+ - Components live in `frontend/components/`
+@@ -203,7 +203,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+ 
+ // Streaming (what we use)
+ const stream = await groq.chat.completions.create({
+-  model: 'llama-3.3-70b-versatile',
++  model: 'openai/gpt-oss-120b',
+   messages: [{ role: 'system'|'user'|'assistant', content: string }],
+   stream: true,
+   max_tokens: 2048,
+@@ -215,7 +215,7 @@ for await (const chunk of stream) {
+ 
+ // Non-streaming
+ const completion = await groq.chat.completions.create({
+-  model: 'llama-3.3-70b-versatile',
++  model: 'openai/gpt-oss-120b',
+   messages: [...],
+   stream: false,
+ });
+diff --git a/.claude/skills/orchestrai/SKILL.md b/.claude/skills/orchestrai/SKILL.md
+index 1be727e..1951765 100644
+--- a/.claude/skills/orchestrai/SKILL.md
++++ b/.claude/skills/orchestrai/SKILL.md
+@@ -39,7 +39,7 @@ Every pixel must reinforce that the user is in command of something serious.
+ | Styling     | Tailwind CSS v3 + CSS custom properties          |
+ | Fonts       | DM Sans (UI body) · Plus Jakarta Sans (headings) · JetBrains Mono (code/mono) |
+ | Database    | Supabase — PostgreSQL + RLS + Auth               |
+-| AI          | Groq API — `llama-3.3-70b-versatile` streaming  |
++| AI          | Groq API — `openai/gpt-oss-120b` streaming  |
+ | Deploy      | Vercel                                           |
+ | Language    | TypeScript — strict mode, no `any`               |
+ 
+@@ -319,7 +319,7 @@ export async function POST(req: Request) {
+ 
+   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+   const stream = await groq.chat.completions.create({
+-    model: 'llama-3.3-70b-versatile',
++    model: 'openai/gpt-oss-120b',
+     messages: [
+       { role: 'system', content: agent.systemPrompt },
+       ...messages
+diff --git a/GEMINI.md b/GEMINI.md
+index d929424..9da3822 100644
+--- a/GEMINI.md
++++ b/GEMINI.md
+@@ -262,7 +262,7 @@ export const runtime = 'edge'; // required on streaming routes
+ 
+ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY! });
+ const stream = await groq.chat.completions.create({
+-  model: 'llama-3.3-70b-versatile',
++  model: 'openai/gpt-oss-120b',
+   messages: [{ role: 'system', content: systemPrompt }, ...messages],
+   stream: true,
+   max_tokens: 2048,
+diff --git a/frontend/.env.example b/frontend/.env.example
+index 41ce5a1..7f30fd0 100644
+--- a/frontend/.env.example
++++ b/frontend/.env.example
+@@ -13,6 +13,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
+ NEXT_PUBLIC_APP_NAME=OrchestrAI
+ 
+ # ── Model selection (optional override) ──────────────────────
+-# Default: llama-3.3-70b-versatile (Groq free tier)
+-# Other free options: mixtral-8x7b-32768, gemma2-9b-it
+-GROQ_MODEL=llama-3.3-70b-versatile
++# Default: openai/gpt-oss-120b (Groq free tier)
++# llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16
++# Other option: qwen/qwen3.6-27b
++GROQ_MODEL=openai/gpt-oss-120b
+diff --git a/frontend/app/api/brief/route.ts b/frontend/app/api/brief/route.ts
+index d6a6976..96c9122 100644
+--- a/frontend/app/api/brief/route.ts
++++ b/frontend/app/api/brief/route.ts
+@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
+ import Groq from 'groq-sdk'
+ import { AGENTS_CATALOG } from '@/lib/agents-data'
+ 
+-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
++const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
+ 
+ const agentList = AGENTS_CATALOG
+   .map(a => `- ${a.name} (${a.role}, domain: ${a.domain})`)
+@@ -59,13 +59,26 @@ export async function POST(req: NextRequest) {
+   // Cap at last 20 messages to prevent token overflow
+   const cappedMessages = messages.slice(-20)
+ 
+-  const stream = await groq.chat.completions.create({
+-    model: 'llama-3.3-70b-versatile',
++  if (!process.env.GROQ_API_KEY) {
++    console.error('[API /brief] GROQ_API_KEY est manquante.')
++    return NextResponse.json({ error: 'AI service not configured.' }, { status: 503 })
++  }
++
++  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
++
++  let stream
++  try {
++    stream = await groq.chat.completions.create({
++    model: GROQ_MODEL,
+     messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...cappedMessages],
+     stream: true,
+-    max_tokens: 512,
++    max_tokens: 2048,
+     temperature: 0.7,
+   })
++  } catch (err) {
++    console.error('[API /brief] Groq error:', err)
++    return NextResponse.json({ error: 'AI service unavailable. Try again shortly.' }, { status: 502 })
++  }
+ 
+   const encoder = new TextEncoder()
+   const readable = new ReadableStream({
+diff --git a/frontend/config/models.ts b/frontend/config/models.ts
+index 30c794f..43d3a64 100644
+--- a/frontend/config/models.ts
++++ b/frontend/config/models.ts
+@@ -36,9 +36,9 @@ export const MODELS: Record<string, Model> = {
+   },
+   'llama-groq': {
+     id: 'llama-groq',
+-    name: 'Meta Llama 3.3 (Groq)',
++    name: 'GPT-OSS 120B (Groq)',
+     provider: 'groq',
+-    modelId: 'llama-3.3-70b-versatile',
++    modelId: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+     isFree: true,
+     description: 'Fiable et performant pour le JSON structuré.',
+   },
+diff --git a/frontend/lib/orchestrai.ts b/frontend/lib/orchestrai.ts
+index d644f6e..2ff3422 100644
+--- a/frontend/lib/orchestrai.ts
++++ b/frontend/lib/orchestrai.ts
+@@ -52,7 +52,8 @@ async function callGroq(modelId: string, messages: ChatMessage[]): Promise<strin
+     model: modelId,
+     messages,
+     temperature: 0.7,
+-    max_tokens: 2048,
++    // gpt-oss est un modèle de raisonnement : les tokens de réflexion comptent dans la limite
++    max_tokens: 4096,
+   });
+ 
+   return completion.choices?.[0]?.message?.content || '';
+-- 
+2.43.0
+
